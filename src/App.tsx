@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from
 import { BossSelection } from './components/BossSelection';
 import { DieFace, RollingDie } from './components/DieFace';
 import { CardPeek, DiscardList } from './components/CardCatalog';
+import { BossCombatZone } from './components/BossCombatZone';
 import { CombatZone } from './components/CombatZone';
 import { HandDock } from './components/HandDock';
 import { CardInspectOverlay } from './components/overlays/CardInspectOverlay';
@@ -21,13 +22,19 @@ import {
   chooseMovementDestination,
   isCombatTargetUntargetable,
   resolveHasteAttack,
+  cancelMovementPath,
   chooseMovementPath,
   clearPlayerFeedback,
   chooseTreasureCard,
   clearTrapFeedback,
   clearTreasureFeedback,
+  completeBossCombatFeedback,
   completeCombatFeedback,
   confirmMovementPath,
+  endBossPlayerPhase,
+  playBossActionCard,
+  resolveBossAttack,
+  rollBossMana,
   describeMovementPath,
   discardCardForTrapBonus,
   undoTrapDiscard,
@@ -76,6 +83,7 @@ export function App() {
   const [showTowerStack, setShowTowerStack] = useState(false);
   const [showDecks, setShowDecks] = useState(false);
   const [selectedEnemyInstanceId, setSelectedEnemyInstanceId] = useState<string | null>(null);
+  const [selectedBossDieIndex, setSelectedBossDieIndex] = useState<number | null>(null);
   const [inspectedHandIndex, setInspectedHandIndex] = useState<number | null>(null);
   const [combatMessage, setCombatMessage] = useState<string | null>(null);
   const [inspectedCard, setInspectedCard] = useState<ActionCard | null>(null);
@@ -148,6 +156,15 @@ export function App() {
     }, game.combatFeedback.combatEnded ? durations.combatEnd : game.combatFeedback.defeated ? durations.defeat : durations.damage);
     return () => window.clearTimeout(timeout);
   }, [animationSpeed, game?.combatFeedback]);
+
+  useEffect(() => {
+    if (!game?.bossCombatFeedback) return;
+    const durations = animationDurations[animationSpeed];
+    const timeout = window.setTimeout(() => {
+      setGame((currentGame) => currentGame?.bossCombatFeedback ? completeBossCombatFeedback(currentGame) : currentGame);
+    }, game.bossCombatFeedback.dieRemoved ? durations.defeat : durations.damage);
+    return () => window.clearTimeout(timeout);
+  }, [animationSpeed, game?.bossCombatFeedback]);
 
   useEffect(() => {
     if (!game?.playerFeedback) return;
@@ -282,6 +299,7 @@ export function App() {
   const topAdvancedCards = game.advancedDecks.map((deck) => deck[0] ? getAction(deck[0]) ?? null : null);
   const hasPendingHit = Boolean(game.activeCombat && game.activeCombat.pendingHits.length > 0 && !game.combatFeedback);
   const canActInCombat = Boolean(game.activeCombat?.phase === 'player' && game.mana !== null && !game.combatFeedback && !hasPendingHit);
+  const canActInBossCombat = Boolean(game.activeBossCombat?.phase === 'player' && game.mana !== null && !game.bossCombatFeedback);
   const unplayableCardIds = new Set(
     canActInCombat
       ? game.hand.filter((cardId) => {
@@ -351,6 +369,7 @@ export function App() {
 
   function startNewGame() {
     setSelectedEnemyInstanceId(null);
+    setSelectedBossDieIndex(null);
     setInspectedHandIndex(null);
     setCombatMessage(null);
     setMovementAnim(null);
@@ -386,7 +405,17 @@ export function App() {
   }
 
   function playCardFromHand(cardId: string) {
-    if (!game?.activeCombat) return;
+    if (!game) return;
+
+    if (game.activeBossCombat) {
+      if (game.mana === null) { setCombatMessage("Lance d'abord le dé de mana."); return; }
+      setCombatMessage(null);
+      setInspectedHandIndex(null);
+      setGame(playBossActionCard(game, cardId, selectedBossDieIndex));
+      return;
+    }
+
+    if (!game.activeCombat) return;
 
     const cardRaw = getAction(cardId);
     const card = cardRaw ? resolveCardForDisplay(cardRaw, game.flippedCards) : undefined;
@@ -514,7 +543,63 @@ export function App() {
 
       <section className="play-area">
         <section className="panel board-panel">
-          {game.activeCombat && activeEnemies.length > 0 ? (
+          {game.activeBossCombat ? (
+            <BossCombatZone
+              boss={selectedBoss}
+              bossCombat={game.activeBossCombat}
+              bossCombatFeedback={game.bossCombatFeedback}
+              deckNode={<>
+                <div className="deck-strip-section" title={`Deck action — ${game.deck.length} carte(s)`}>
+                  <div className="card-peek-wrapper">
+                    <CardPeek card={topActionCard} emptyLabel="Deck vide" onInspect={setInspectedCard} />
+                    {topActionCard && <span className="deck-count-badge">×{game.deck.length}</span>}
+                    {canActInBossCombat && topActionCard && (
+                      <button className="deck-buy-overlay-btn" onClick={buyActionCard}>Acheter · 1◆</button>
+                    )}
+                  </div>
+                </div>
+                {topAdvancedCards.map((card, index) => (
+                  <div className="deck-strip-section" key={`strip-advanced-boss-${index}`} title={`Deck avancé ${index + 1}`}>
+                    <div className="card-peek-wrapper">
+                      <CardPeek card={card} emptyLabel="Vide" onInspect={setInspectedCard} />
+                      {card && <span className="deck-count-badge">×{game.advancedDecks[index].length}</span>}
+                      {card && (
+                        <button
+                          className="deck-buy-overlay-btn"
+                          disabled={game.xp < 2 || game.hand.length >= 5 || Boolean(game.bossCombatFeedback)}
+                          onClick={() => buyAdvancedCard(index as 0 | 1)}
+                        >
+                          2 XP
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <div className="deck-strip-section" title={`Défausse — ${game.discard.length} carte(s)`}>
+                  <DiscardList discard={game.discard} onInspect={setInspectedCard} />
+                </div>
+              </>}
+              defense={game.activeBossCombat.defense}
+              health={game.health}
+              mana={game.mana}
+              onEndPlayerPhase={() => setGame(endBossPlayerPhase(game))}
+              onResolveBossAttack={() => setGame(resolveBossAttack(game))}
+              onRollMana={() => setGame(rollBossMana(game))}
+              onSelectDie={setSelectedBossDieIndex}
+              onShowDecks={() => setShowDecks(true)}
+              playerFeedback={game.playerFeedback}
+              selectedDieIndex={selectedBossDieIndex}
+              xp={game.xp}
+              xpActionsNode={<>
+                {canActInBossCombat && game.xp >= 1 && (
+                  <button onClick={rerollMana}>Relancer mana · 1 XP</button>
+                )}
+                {game.banishableCardId && (
+                  <button disabled={!canBanishPlayedCard(game)} onClick={banishPlayedCard}>Bannir carte jouée · 1 XP</button>
+                )}
+              </>}
+            />
+          ) : game.activeCombat && activeEnemies.length > 0 ? (
             <>
               <CombatZone
                 activeEnemies={activeEnemies}
@@ -575,8 +660,8 @@ export function App() {
                 selectedEnemyInstanceId={selectedEnemyInstanceId}
                 xp={game.xp}
                 xpActionsNode={<>
-                  {game.activeCombat?.phase === 'player' && game.mana !== null && !game.combatFeedback && (
-                    <button disabled={game.xp < 1} onClick={rerollMana}>Relancer mana · 1 XP</button>
+                  {game.activeCombat?.phase === 'player' && game.mana !== null && !game.combatFeedback && game.xp >= 1 && (
+                    <button onClick={rerollMana}>Relancer mana · 1 XP</button>
                   )}
                   {game.banishableCardId && (
                     <button disabled={!canBanishPlayedCard(game)} onClick={banishPlayedCard}>Bannir carte jouee · 1 XP</button>
@@ -602,6 +687,7 @@ export function App() {
               />
               {!game.activeCombat && game.phase === 'choose-path' && !movementAnim && (
                 <div className="path-strip">
+                  <button className="path-cancel" onClick={() => setGame(cancelMovementPath(game))} aria-label="Annuler">✕</button>
                   <button className="path-nav" onClick={() => cyclePath(-1)} aria-label="Chemin précédent">‹</button>
                   <span className="path-counter">{(game.selectedMovementPathIndex ?? 0) + 1} / {game.pendingMovementPaths.length}</span>
                   <button className="path-nav" onClick={() => cyclePath(1)} aria-label="Chemin suivant">›</button>

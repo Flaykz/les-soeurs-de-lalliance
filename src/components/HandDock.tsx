@@ -104,7 +104,7 @@ export function HandDock({ game, onPlayCard, onInspectCard, onDiscardForTrap, un
               }}
               type="button"
             >
-              <ActionCardContent card={card} />
+              <ActionCardContent card={card} isLevel2={game.flippedCards.includes(cardId)} />
               {trapMode && (
                 <span className="discard-ready-badge" aria-hidden="true">↓</span>
               )}

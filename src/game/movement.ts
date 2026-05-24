@@ -99,6 +99,13 @@ export function chooseMovementPath(state: GameState, pathIndex: number): GameSta
   return { ...state, selectedMovementPathIndex: pathIndex };
 }
 
+export function cancelMovementPath(state: GameState): GameState {
+  if (state.phase !== 'choose-path') {
+    return state;
+  }
+  return { ...state, pendingMovementPaths: [], selectedMovementPathIndex: null, phase: 'choose-destination' };
+}
+
 export function confirmMovementPath(state: GameState): GameState {
   if (state.phase !== 'choose-path' || state.selectedMovementPathIndex === null) {
     return state;
@@ -209,7 +216,13 @@ function getMovementPaths(state: GameState, startCellId: string, steps: number):
         continue;
       }
 
-      walk(nextCell, remainingSteps - 1, [...path, nextCell.id]);
+      const extendedPath = [...path, nextCell.id];
+      if (nextCell.kind === 'boss') {
+        paths.push(extendedPath);
+        continue;
+      }
+
+      walk(nextCell, remainingSteps - 1, extendedPath);
     }
   };
 

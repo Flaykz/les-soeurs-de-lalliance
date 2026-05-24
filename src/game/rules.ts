@@ -47,6 +47,8 @@ export function createInitialGameState(bossId: string): GameState {
     resolvedCells: [tower.startingCellId],
     activeCombat: null,
     combatFeedback: null,
+    activeBossCombat: null,
+    bossCombatFeedback: null,
     playerFeedback: null,
     trapFeedback: null,
     treasureFeedback: null,
@@ -97,4 +99,5 @@ export * from './movement';
 export * from './combat';
 export * from './cards';
 export * from './cells';
+export * from './boss-combat';
 export * from './utils';

@@ -6,5 +6,6 @@
 @import './overlays.css';
 @import './tower.css';
 @import './combat.css';
+@import './boss-combat.css';
 @import './feedback.css';
 @import './responsive.css';

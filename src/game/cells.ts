@@ -2,6 +2,7 @@ import { baseEnemies } from '../data/baseSet';
 import type { GameState, PendingCombatGroup, TowerCell } from './types';
 import { getAction, getBoss, getCell, getEnemy, getTower } from './data-access';
 import { resolveCardForDisplay } from './data-access';
+import { initBossCombat } from './boss-combat';
 import { applyDamageToHealth } from './health';
 import { addLog, rollDie, shuffle } from './utils';
 
@@ -164,16 +165,24 @@ export function continuePendingResolution(state: GameState): GameState {
 }
 
 export function completeMovementSequence(state: GameState): GameState {
-  if (state.phase === 'victory' || state.phase === 'game-over' || state.activeCombat) {
+  if (state.phase === 'victory' || state.phase === 'game-over' || state.activeCombat || state.activeBossCombat) {
     return state;
   }
 
   const towerSequenceCount = state.towerSequenceCount + 1;
   const nextTowerId = state.towerIds[state.currentTowerIndex + 1];
-  if (towerSequenceCount < TOWER_SEQUENCE_LIMIT || !nextTowerId) {
+
+  if (towerSequenceCount < TOWER_SEQUENCE_LIMIT) {
     return addLog(
       { ...state, towerSequenceCount },
       `Sequence ${towerSequenceCount}/${TOWER_SEQUENCE_LIMIT} de cette tour terminee.`
+    );
+  }
+
+  if (!nextTowerId) {
+    return addLog(
+      { ...state, towerSequenceCount, phase: 'game-over' },
+      'Troisieme sequence terminee sans atteindre la case Boss. Defaite !'
     );
   }
 
@@ -242,8 +251,7 @@ function resolveCell(state: GameState, cell: TowerCell): GameState {
   }
 
   if (cell.kind === 'boss') {
-    const boss = getBoss(state.bossId);
-    return addLog({ ...state, phase: 'victory', resolvedCells: [...state.resolvedCells, cell.id] }, `${boss?.name ?? 'Boss'} atteint. Victoire prototype !`);
+    return initBossCombat({ ...state, resolvedCells: [...state.resolvedCells, cell.id] });
   }
 
   return state;

@@ -79,6 +79,23 @@ export type TowerDefinition = {
 
 export type GamePhase = 'idle' | 'movement-roll' | 'choose-movement' | 'choose-destination' | 'choose-path' | 'game-over' | 'victory';
 
+export type BossCombatPhase = 'roll-mana' | 'player' | 'boss-attack';
+
+export type ActiveBossCombat = {
+  round: number;
+  phase: BossCombatPhase;
+  healthDice: (number | null)[];
+  gaugeIndex: number;
+  defense: number;
+};
+
+export type BossCombatFeedback = {
+  dieIndex: number;
+  damage: number;
+  dieRemoved: boolean;
+  gaugeCleared: boolean;
+};
+
 export type CombatEnemy = {
   instanceId: string;
   enemyId: string;
@@ -195,6 +212,8 @@ export type GameState = {
   resolvedCells: string[];
   activeCombat: ActiveCombat | null;
   combatFeedback: CombatFeedback | null;
+  activeBossCombat: ActiveBossCombat | null;
+  bossCombatFeedback: BossCombatFeedback | null;
   playerFeedback: PlayerFeedback | null;
   trapFeedback: TrapFeedback | null;
   treasureFeedback: TreasureFeedback | null;

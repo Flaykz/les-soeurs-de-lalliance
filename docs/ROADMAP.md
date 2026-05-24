@@ -6,7 +6,7 @@ Ce document sert de plan de travail pour rendre la boite de base jouable numéri
 
 Atteindre une partie complete jouable de bout en bout avec les donnees reelles deja saisies. Le gros reste a faire n'est plus la saisie des donnees, mais l'application complete de ces donnees par le moteur de regles : effets speciaux de cartes non modelises, puis combat boss.
 
-Etat du code au 2026-05-24 : module `health.ts` extrait, systeme d'animation configurable avec overlays UI en place. Les valeurs `?` ennemies sont tirées aléatoirement au début du combat. La fonction morte `resolveTrapLevel` a été supprimée. Les cinq mots-clés ennemis (Caché, Hâte, Coriace, Rage, Force Brutale) sont implémentés dans le moteur et affichés dans l'UI. Le fichier `docs/RULES_FR.md` a été mis à jour avec les définitions officielles de tous les mots-clés (carte Keywords.pdf). Les mots-clés boss Gardiens et Brûlures ne sont pas encore implémentés (attente phase 6 — combat boss). Le combat boss reste une victoire prototype.
+Etat du code au 2026-05-25 : module `health.ts` extrait, systeme d'animation configurable avec overlays UI en place. Les valeurs `?` ennemies sont tirées aléatoirement au début du combat. La fonction morte `resolveTrapLevel` a été supprimée. Les cinq mots-clés ennemis (Caché, Hâte, Coriace, Rage, Force Brutale) sont implémentés dans le moteur et affichés dans l'UI. Le fichier `docs/RULES_FR.md` a été mis à jour avec les définitions officielles de tous les mots-clés (carte Keywords.pdf). Les mots-clés boss Gardiens et Brûlures ne sont pas encore implémentés (attente phase 6 — combat boss). Le combat boss reste une victoire prototype. Deux nouvelles règles boss-tower implémentées : arrêt immédiat sur case boss en cours de mouvement, et game over si la 3e séquence se termine sans atteindre la case boss sur la tour spéciale. Bug visuel corrigé : le badge de niveau dans la main affiche désormais correctement « 2 » / « A2 » après amélioration d'une carte.
 
 ## Point de regles - officiel vs implementation actuelle
 
@@ -180,6 +180,7 @@ Statut : en cours avance
 - [x] Interdire de revenir sur une case deja visitee.
 - [x] Gerer plusieurs chemins vers une meme destination avec selection, previsualisation et confirmation.
 - [x] Afficher les chemins sous forme de recap cumule par icones.
+- [x] Arreter le deplacement immediatement si le chemin passe par la case boss, meme s'il reste des pas.
 - [ ] Confirmer les details exacts des regles de mouvement avec le livret, notamment les cas ou aucun deplacement exact n'est possible.
 - [x] Remplacer les layouts placeholders par les layouts/setup reels de la boite de base.
 - [x] Ajouter plusieurs tours normales saisies pour tester des parties plus longues.
@@ -205,6 +206,7 @@ Statut : en cours avance
 - [x] Remplacer les recuperations automatiques des tresors avances 1 et 2 par un choix joueur quand plusieurs cartes sont recuperables.
 - [ ] Distinguer clairement les tables de tresor normal et tresor avance dans l'UI et les references.
 - [x] Resoudre le boss uniquement quand la destination finale est la case boss de la tour speciale boss.
+- [x] Declencher game over si la 3e sequence de la tour boss se termine sans que la case boss ait ete atteinte.
 - [ ] Ajouter un journal plus clair des files de resolution quand un mouvement traverse beaucoup de cases.
 
 Validation : pour un chemin contenant piege, tresor et plusieurs ennemis, le jeu resout toujours piege puis combats puis tresor puis boss.
@@ -300,6 +302,7 @@ Statut : en cours partiel
 - [x] Animation d'introduction de piege (`showTrapIntro`).
 - [x] Overlays UI : `TowerStackOverlay`, `LogOverlay`, `DecksOverlay`, `CardInspectOverlay`.
 - [x] Cartes de reference en jeu : `TrapReferenceCard`, `TreasureReferenceCard`.
+- [x] Correction bug visuel : badge de niveau dans `HandDock` affiche desormais « 2 » / « A2 » apres amelioration d'une carte (prop `isLevel2` manquant).
 
 Validation : une partie peut etre interrompue/reprise sans erreur, meme apres evolution controlee du modele.
 

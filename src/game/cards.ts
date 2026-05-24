@@ -189,7 +189,9 @@ export function buyPotionWithXp(state: GameState): GameState {
 }
 
 export function rerollManaWithXp(state: GameState): GameState {
-  if (!state.activeCombat || state.activeCombat.phase !== 'player' || state.mana === null || state.combatFeedback) {
+  const inCombatPlayerPhase = (state.activeCombat?.phase === 'player' && !state.combatFeedback)
+    || (state.activeBossCombat?.phase === 'player' && !state.bossCombatFeedback);
+  if (!inCombatPlayerPhase || state.mana === null) {
     return addLog(state, 'Relance de mana impossible maintenant.');
   }
 
@@ -220,10 +222,12 @@ export function rerollMovementDiceWithXp(state: GameState): GameState {
 }
 
 export function canBanishPlayedCard(state: GameState): boolean {
+  const inPlayerPhase =
+    (state.activeCombat && (state.activeCombat.phase === 'player' || Boolean(state.combatFeedback)))
+    || (state.activeBossCombat && (state.activeBossCombat.phase === 'player' || Boolean(state.bossCombatFeedback)));
   return Boolean(
     state.banishableCardId
-    && state.activeCombat
-    && (state.activeCombat.phase === 'player' || Boolean(state.combatFeedback))
+    && inPlayerPhase
     && state.xp >= BANISH_XP_COST
     && state.discard.includes(state.banishableCardId)
     && state.phase !== 'game-over'
@@ -253,16 +257,17 @@ export function banishPlayedCardWithXp(state: GameState): GameState {
 }
 
 export function discardHandCardForMana(state: GameState, handIndex: number): GameState {
-  if (!state.activeCombat) {
+  if (!state.activeCombat && !state.activeBossCombat) {
     return addLog(state, 'Aucun combat actif.');
   }
 
-  if (state.combatFeedback) {
+  if (state.combatFeedback || state.bossCombatFeedback) {
     return state;
   }
 
-  if (state.activeCombat.phase !== 'player' || state.mana === null) {
-    return addLog(state, 'Defausse pour mana possible seulement pendant la phase joueuse, apres le lancer de mana.');
+  const phase = state.activeCombat?.phase ?? state.activeBossCombat?.phase;
+  if (phase !== 'player' || state.mana === null) {
+    return addLog(state, 'Défausse pour mana possible seulement pendant la phase joueuse, après le lancer de mana.');
   }
 
   if (state.mana >= 6) {
