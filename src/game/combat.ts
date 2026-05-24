@@ -129,7 +129,7 @@ export function playActionCard(state: GameState, cardId: string, targetInstanceI
     banishableCardId: cardId
   };
 
-  nextState = applyActionEffects(nextState, face, target.instanceId);
+  nextState = applyActionEffects(nextState, face, target?.instanceId ?? null);
 
   return nextState.activeCombat || nextState.combatFeedback ? nextState : continuePendingResolution(nextState);
 }
@@ -288,7 +288,7 @@ function applyActionEffects(state: GameState, face: CardFaceData, targetInstance
       nextState = { ...nextState, activeCombat: { ...nextState.activeCombat, pendingHits: remainingHits } };
     }
     if (firstHit > 0) {
-      nextState = applyActionDamage(nextState, firstHit, targetInstanceId);
+      nextState = applyActionDamage(nextState, firstHit, targetInstanceId ?? '');
     }
   }
 

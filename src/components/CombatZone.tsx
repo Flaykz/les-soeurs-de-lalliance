@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type React from 'react';
 import type { CombatFeedback, CombatPhase, EnemyCard, PlayerFeedback } from '../game/types';
 import { formatValue } from '../ui/formatters';

@@ -305,7 +305,7 @@ export function App() {
 
   function startNewGame() {
     setSelectedEnemyInstanceId(null);
-    setSelectedHandIndex(null);
+    setInspectedHandIndex(null);
     setCombatMessage(null);
     setMovementAnim(null);
     setShowTrapIntro(false);
@@ -361,7 +361,7 @@ export function App() {
     }
 
     setCombatMessage(null);
-    setSelectedHandIndex(null);
+    setInspectedHandIndex(null);
     setGame(playActionCard(game, cardId, needsTarget ? selectedEnemyInstanceId : null));
   }
 
