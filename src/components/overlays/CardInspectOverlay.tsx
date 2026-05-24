@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { resolveCardForDisplay } from '../../game/data-access';
 import type { ActionCard } from '../../game/types';
 import { formatValue, getEffectDisplays } from '../../ui/formatters';
@@ -18,16 +18,23 @@ export function CardInspectOverlay({ card, flippedCards, xp, canUpgrade, onUpgra
   discardDisabled?: boolean;
 }) {
   const justOpenedRef = useRef(false);
+  const [showingLevel2, setShowingLevel2] = useState(false);
+
   useEffect(() => {
     if (!card) return;
     justOpenedRef.current = true;
+    setShowingLevel2(false);
     const t = window.setTimeout(() => { justOpenedRef.current = false; }, 350);
     return () => window.clearTimeout(t);
-  }, [card]);
+  }, [card?.id]);
 
   if (!card) return null;
   const resolved = resolveCardForDisplay(card, flippedCards);
   const isFlipped = !!card.level2 && flippedCards.includes(card.id);
+  const canPreviewLevel2 = !!card.level2 && !isFlipped;
+  const displayFace: ActionCard = showingLevel2 && card.level2
+    ? { ...card, ...card.level2 }
+    : resolved;
   const upgradeCost = UPGRADE_XP_COST;
   const upgradeAvailable = canUpgrade && !!card.level2 && !isFlipped && (xp ?? 0) >= upgradeCost;
 
@@ -36,18 +43,32 @@ export function CardInspectOverlay({ card, flippedCards, xp, canUpgrade, onUpgra
       <div className="card-inspect-modal" onClick={(e) => e.stopPropagation()}>
         <div className={`card-inspect-tile ${card.kind}`}>
           <div className="card-inspect-header">
-            <span className="mana-chip">{formatValue(resolved.manaCost)}</span>
+            <span className="mana-chip">{formatValue(displayFace.manaCost)}</span>
             <span className="card-inspect-kind">
               {card.kind === 'advanced-action' ? 'Action avancée' : 'Action'}
             </span>
+            {canPreviewLevel2 && (
+              <button
+                aria-label={showingLevel2 ? 'Voir face actuelle' : 'Aperçu niveau 2'}
+                className="card-flip-btn"
+                onClick={() => setShowingLevel2((v) => !v)}
+                type="button"
+              >
+                {showingLevel2 ? '◀ Niv. 1' : 'Niv. 2 ▶'}
+              </button>
+            )}
           </div>
-          {isFlipped && <span className="card-level-badge">Niv. 2</span>}
-          <p className="card-inspect-text">{resolved.text}</p>
-          {resolved.traits && resolved.traits.length > 0 && (
-            <p className="card-inspect-traits">{resolved.traits.join(' · ')}</p>
+          {(isFlipped || showingLevel2) && (
+            <span className="card-level-badge">
+              {showingLevel2 && !isFlipped ? 'Aperçu niv. 2' : 'Niv. 2'}
+            </span>
+          )}
+          <p className="card-inspect-text">{displayFace.text}</p>
+          {displayFace.traits && displayFace.traits.length > 0 && (
+            <p className="card-inspect-traits">{displayFace.traits.join(' · ')}</p>
           )}
           <div className="effect-row card-inspect-effects">
-            {getEffectDisplays(resolved).map(({ label, kind }, i) => (
+            {getEffectDisplays(displayFace).map(({ label, kind }, i) => (
               <span className={`effect-badge effect-${kind}`} key={i}>{label}</span>
             ))}
           </div>

@@ -2,9 +2,10 @@ import { useState, type CSSProperties } from 'react';
 import type React from 'react';
 import type { CombatFeedback, CombatPhase, EnemyCard, PlayerFeedback } from '../game/types';
 import { formatValue } from '../ui/formatters';
+import { DieFace } from './DieFace';
 import { EnemyCardDisplay } from './EnemyCard';
 
-export function CombatZone({ activeEnemies, canSelectEnemy, combatFeedback, combatPhase, combatRound, defense, deckNode, health, mana, onEndPlayerPhase, onResolveHaste, onRollMana, onSelectEnemy, pendingHasteAttack, playerFeedback, selectedEnemyInstanceId, xpActionsNode }: {
+export function CombatZone({ activeEnemies, canSelectEnemy, combatFeedback, combatPhase, combatRound, defense, deckNode, health, mana, xp, onEndPlayerPhase, onResolveHaste, onRollMana, onSelectEnemy, onShowDecks, pendingHasteAttack, playerFeedback, selectedEnemyInstanceId, xpActionsNode }: {
   activeEnemies: Array<{ instanceId: string; enemyId: string; enemyHealth: number; resolvedAttack: number; card: EnemyCard | undefined; isUntargetable?: boolean }>;
   canSelectEnemy: boolean;
   combatFeedback: CombatFeedback | null;
@@ -14,10 +15,12 @@ export function CombatZone({ activeEnemies, canSelectEnemy, combatFeedback, comb
   deckNode?: React.ReactNode;
   health: number;
   mana: number | null;
+  xp: number;
   onEndPlayerPhase: () => void;
   onResolveHaste: (manaSpent: number) => void;
   onRollMana: () => void;
   onSelectEnemy: (enemyInstanceId: string) => void;
+  onShowDecks?: () => void;
   pendingHasteAttack: number | null;
   playerFeedback: PlayerFeedback | null;
   selectedEnemyInstanceId: string | null;
@@ -68,12 +71,18 @@ export function CombatZone({ activeEnemies, canSelectEnemy, combatFeedback, comb
             </svg>
           </div>
 
-          {mana !== null && (
-            <div className="dice-roll player-mana-roll" aria-label={`Mana : ${mana}`}>
-              <span className="die-face mana-die">{mana}</span>
-              <span className="player-mana-label">Mana</span>
+          <div className="player-bottom-row">
+            {mana !== null && (
+              <div className="dice-roll player-mana-roll" aria-label={`Mana : ${mana}`}>
+                <DieFace value={mana} modifier="mana-die" />
+                <span className="player-mana-label">Mana</span>
+              </div>
+            )}
+            <div aria-label={`${xp} XP`} className="player-xp-stat">
+              <span className="player-xp-value">{xp}</span>
+              <span className="player-xp-label">XP</span>
             </div>
-          )}
+          </div>
         </div>
 
         <div className="combat-center">
@@ -103,6 +112,11 @@ export function CombatZone({ activeEnemies, canSelectEnemy, combatFeedback, comb
               )}
               {xpActionsNode}
             </div>
+            {onShowDecks && (
+              <button className="secondary-button combat-show-decks-btn" onClick={onShowDecks} type="button">
+                Voir decks
+              </button>
+            )}
           </div>
         </div>
 

@@ -161,6 +161,36 @@
   opacity: 0.8;
 }
 
+.player-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.player-xp-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.player-xp-value {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #facc15;
+  line-height: 1;
+}
+
+.player-xp-label {
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #facc15;
+  opacity: 0.8;
+}
+
 .player-card-hit {
   animation: playerCardHit var(--combat-animation-ms, 1100ms) ease both;
 }
@@ -224,6 +254,13 @@
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
+}
+
+.combat-show-decks-btn {
+  font-size: 1rem;
+  padding: 14px 28px;
+  min-height: 52px;
+  width: 100%;
 }
 
 .mana-roll {

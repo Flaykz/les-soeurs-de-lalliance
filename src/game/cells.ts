@@ -272,15 +272,8 @@ function resolveTrap(state: GameState, cell: TowerCell): GameState {
     }
     const discardIndex = Math.floor(Math.random() * state.hand.length);
     const discardedCard = state.hand[discardIndex];
-    const next = addLog(
-      {
-        ...state,
-        hand: state.hand.filter((_, index) => index !== discardIndex),
-        discard: discardedCard ? [...state.discard, discardedCard] : state.discard
-      },
-      `${cell.label} : piege ${roll}. Une carte aleatoire de la main est defaussee.`
-    );
-    return { ...next, trapFeedback: { dieResult: roll, damage: 0, consequence: 'discard-hand' } };
+    const next = addLog(state, `${cell.label} : piege ${roll}. Une carte aleatoire de la main est defaussee.`);
+    return { ...next, trapFeedback: { dieResult: roll, damage: 0, consequence: 'discard-hand', discardedCardId: discardedCard } };
   }
 
   const discardedCards = state.deck.slice(0, 5);
@@ -307,7 +300,17 @@ function startTrapLevelDiscard(state: GameState, cell: TowerCell, level: number,
 }
 
 export function clearTrapFeedback(state: GameState): GameState {
-  return continuePendingResolution({ ...state, trapFeedback: null });
+  const feedback = state.trapFeedback;
+  let next = { ...state, trapFeedback: null };
+  if (feedback?.consequence === 'discard-hand' && feedback.discardedCardId) {
+    const cardId = feedback.discardedCardId;
+    next = {
+      ...next,
+      hand: next.hand.filter((id) => id !== cardId),
+      discard: [...next.discard, cardId],
+    };
+  }
+  return continuePendingResolution(next);
 }
 
 export function clearTreasureFeedback(state: GameState): GameState {
@@ -335,6 +338,30 @@ export function discardCardForTrapBonus(state: GameState, handIndex: number): Ga
       }
     },
     `Défausse de ${card.text} (coût ${manaCost} mana) pour le jet de protection. Bonus actuel : +${pending.manaBonus + manaCost}.`
+  );
+}
+
+export function undoTrapDiscard(state: GameState): GameState {
+  const pending = state.pendingTrapLevelDiscard;
+  if (!pending || pending.discardedForBonus.length === 0) return state;
+  const cardId = pending.discardedForBonus[pending.discardedForBonus.length - 1];
+  const cardRaw = getAction(cardId);
+  const card = cardRaw ? resolveCardForDisplay(cardRaw, state.flippedCards) : null;
+  const manaCost = card?.manaCost ?? 0;
+  const lastIdx = state.discard.lastIndexOf(cardId);
+  const newDiscard = lastIdx === -1 ? state.discard : state.discard.filter((_, i) => i !== lastIdx);
+  return addLog(
+    {
+      ...state,
+      hand: [...state.hand, cardId],
+      discard: newDiscard,
+      pendingTrapLevelDiscard: {
+        ...pending,
+        manaBonus: pending.manaBonus - manaCost,
+        discardedForBonus: pending.discardedForBonus.slice(0, -1),
+      }
+    },
+    `Annulation : ${card?.text ?? cardId} remise en main. Bonus : +${pending.manaBonus - manaCost}.`
   );
 }
 

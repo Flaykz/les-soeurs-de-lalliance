@@ -339,6 +339,42 @@
   pointer-events: auto;
 }
 
+@keyframes trapCardDiscard {
+  0%   { transform: rotate(0deg) translateY(0); opacity: 1; filter: none; z-index: 50; }
+  30%  { transform: rotate(-8deg) translateY(-40px) scale(1.08); opacity: 1; filter: none; }
+  60%  { transform: rotate(4deg) translateY(-120px) translateX(20px) scale(0.9); opacity: 0.9; filter: grayscale(0.4) brightness(0.7); }
+  100% { transform: rotate(12deg) translateY(-200px) translateX(60px) scale(0.7); opacity: 0; filter: grayscale(1) brightness(0.4); }
+}
+
+.hand-tile.trap-discard-anim {
+  animation: trapCardDiscard 1.4s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+  pointer-events: none;
+  z-index: 50 !important;
+}
+
+.hand-tile.discard-ready {
+  border-color: #f97316;
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.35), inset 0 0 20px rgba(249, 115, 22, 0.08);
+}
+
+.discard-ready-badge {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #f97316;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+
 .hand-tile.selected.action {
   border-color: #facc15;
   background: #312e13;

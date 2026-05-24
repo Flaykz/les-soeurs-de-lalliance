@@ -7,15 +7,18 @@ const FAN_ANGLE = 3;
 const PLAY_THRESHOLD = 100;
 const VISUAL_DRAG_THRESHOLD = 8;
 
-export function HandDock({ game, onPlayCard, onInspectCard, unaffordableCardIds = new Set() }: {
+export function HandDock({ game, onPlayCard, onInspectCard, onDiscardForTrap, unaffordableCardIds = new Set(), trapDiscardAnimCardId }: {
   game: GameState;
   onPlayCard: (cardId: string) => void;
   onInspectCard: (card: ActionCard, handIndex: number) => void;
+  onDiscardForTrap?: (cardId: string, handIndex: number) => void;
   unaffordableCardIds?: Set<string>;
+  trapDiscardAnimCardId?: string;
 }) {
   const [dragState, setDragState] = useState<{ cardId: string; startY: number; currentY: number } | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
+  const trapMode = Boolean(onDiscardForTrap);
   const dragDeltaY = dragState ? Math.max(0, dragState.startY - dragState.currentY) : 0;
   const isDragReady = dragDeltaY >= PLAY_THRESHOLD;
 
@@ -51,7 +54,9 @@ export function HandDock({ game, onPlayCard, onInspectCard, unaffordableCardIds 
     const delta = dragState.startY - e.clientY;
     setDragState(null);
 
-    if (delta >= PLAY_THRESHOLD) {
+    if (trapMode) {
+      onDiscardForTrap!(cardId, index);
+    } else if (delta >= PLAY_THRESHOLD) {
       onPlayCard(cardId);
     } else {
       onInspectCard(card, index);
@@ -60,7 +65,7 @@ export function HandDock({ game, onPlayCard, onInspectCard, unaffordableCardIds 
 
   return (
     <section aria-label="Main" className="panel hand-panel">
-      {dragState && (
+      {dragState && !trapMode && (
         <div aria-hidden="true" className={`hand-play-zone${isDragReady ? ' active' : ''}`} />
       )}
       <div className="hand-fan">
@@ -71,11 +76,20 @@ export function HandDock({ game, onPlayCard, onInspectCard, unaffordableCardIds 
           const isDraggingThis = dragState?.cardId === cardId;
           const zIdx = isDraggingThis ? 30 : Math.max(1, Math.round(10 - Math.abs(index - mid) * 2));
           const isUnaffordable = unaffordableCardIds.has(cardId);
+          const isTrapDiscard = cardId === trapDiscardAnimCardId;
+
+          const classes = [
+            'hand-tile',
+            card.kind,
+            isUnaffordable ? 'unaffordable' : '',
+            trapMode ? 'discard-ready' : '',
+            isTrapDiscard ? 'trap-discard-anim' : '',
+          ].filter(Boolean).join(' ');
 
           return (
             <button
-              aria-label={`Carte, coût ${card.manaCost ?? '?'}`}
-              className={`hand-tile ${card.kind}${isUnaffordable ? ' unaffordable' : ''}`}
+              aria-label={trapMode ? `Défausser, coût ${card.manaCost ?? 0} mana` : `Carte, coût ${card.manaCost ?? '?'}`}
+              className={classes}
               key={`${cardId}-${index}`}
               onPointerCancel={() => setDragState(null)}
               onPointerDown={(e) => handlePointerDown(e, cardId)}
@@ -91,6 +105,9 @@ export function HandDock({ game, onPlayCard, onInspectCard, unaffordableCardIds 
               type="button"
             >
               <ActionCardContent card={card} />
+              {trapMode && (
+                <span className="discard-ready-badge" aria-hidden="true">↓</span>
+              )}
             </button>
           );
         })}

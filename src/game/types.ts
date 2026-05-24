@@ -129,6 +129,7 @@ export type TrapFeedback = {
   damage: number;
   cardsDiscarded?: number;
   consequence: 'level-trap' | 'direct-damage' | 'discard-hand' | 'discard-deck' | 'discard-hand-advanced' | 'discard-hand-all' | 'no-effect';
+  discardedCardId?: string;
 };
 
 export type PendingTrapLevelDiscard = {

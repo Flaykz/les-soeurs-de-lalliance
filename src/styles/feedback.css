@@ -349,6 +349,39 @@
   100% { opacity: 1; background: rgba(239, 68, 68, 0.12); }
 }
 
+@keyframes scanPass {
+  0%   { background: rgba(251, 191, 36, 0.28); }
+  100% { background: transparent; }
+}
+
+@keyframes scanLand {
+  0%   { background: rgba(251, 191, 36, 0.5); transform: scaleX(1.02); }
+  40%  { background: rgba(239, 68, 68, 0.35); transform: scaleX(1); }
+  100% { background: rgba(239, 68, 68, 0.18); }
+}
+
+.trap-ref-row.scan-pass {
+  animation: scanPass 0.28s ease both;
+  animation-delay: var(--scan-delay, 0ms);
+}
+
+.trap-ref-row.scan-land {
+  animation: scanLand 0.55s cubic-bezier(0.2, 0.95, 0.28, 1.1) both;
+  animation-delay: var(--scan-delay, 0ms);
+  background: rgba(239, 68, 68, 0.18);
+}
+
+.trap-ref-row.scan-land .trap-ref-die {
+  border-color: rgba(252, 165, 165, 0.9);
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+}
+
+.trap-ref-row.scan-land .trap-ref-label {
+  color: #fca5a5;
+  font-weight: 700;
+}
+
 /* ── Keyframes feedback ──────────────────────────────────────── */
 
 @keyframes treasureConsequence {
@@ -412,11 +445,56 @@
 
 /* ── Défausse optionnelle avant piège niveau X ───────────────── */
 
-.trap-mana-bonus {
+.trap-level-result {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: center;
+  margin: 12px 0 8px;
+  flex-wrap: wrap;
+}
+
+.trap-level-bonus {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fb923c;
+}
+
+.trap-level-total {
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.trap-chance-formula {
   font-size: 0.9rem;
   font-weight: 700;
   color: #fb923c;
-  margin: 6px 0;
+  margin: 8px 0 4px;
+}
+
+.trap-resolve-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.trap-resolve-row .action-pulse {
+  flex: 1;
+  margin-top: 0;
+}
+
+.trap-undo-discard {
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(251, 146, 60, 0.45);
+  background: rgba(251, 146, 60, 0.1);
+  color: #fb923c;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .trap-discard-hand {

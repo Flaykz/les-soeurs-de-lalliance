@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { BossSelection } from './components/BossSelection';
+import { DieFace, RollingDie } from './components/DieFace';
 import { CardPeek, DiscardList } from './components/CardCatalog';
 import { CombatZone } from './components/CombatZone';
 import { HandDock } from './components/HandDock';
@@ -29,6 +30,7 @@ import {
   confirmMovementPath,
   describeMovementPath,
   discardCardForTrapBonus,
+  undoTrapDiscard,
   discardHandCardForMana,
   resolveTrapLevelWithBonus,
   endCombatRound,
@@ -79,9 +81,15 @@ export function App() {
   const [inspectedCard, setInspectedCard] = useState<ActionCard | null>(null);
   const [movementAnim, setMovementAnim] = useState<{ pathCellIds: string[]; step: number; pendingGame: GameState } | null>(null);
   const [showTrapIntro, setShowTrapIntro] = useState(false);
+  const [showTrapLevelIntro, setShowTrapLevelIntro] = useState(false);
+  const [rollingCellDie, setRollingCellDie] = useState(false);
+  const [trapDiscardAnimCardId, setTrapDiscardAnimCardId] = useState<string | null>(null);
   const prevHealthRef = useRef<number | null>(null);
   const prevXpRef = useRef<number | null>(null);
-  const prevPendingCellRollRef = useRef<GameState['pendingCellRoll'] | null>(null);
+  // Initialiser depuis le game state sauvegardé pour éviter de faux déclenchements d'animation au refresh
+  const prevPendingCellRollRef = useRef<GameState['pendingCellRoll'] | null>(game?.pendingCellRoll ?? null);
+  const prevTrapFeedbackRef = useRef<GameState['trapFeedback']>(game?.trapFeedback ?? null);
+  const prevPendingTrapLevelDiscardRef = useRef<GameState['pendingTrapLevelDiscard']>(game?.pendingTrapLevelDiscard ?? null);
   const shellRef = useRef<HTMLElement>(null);
   const hasScrolledToBottomRef = useRef(false);
   const [animationSpeed, setAnimationSpeed] = useState<AnimationSpeed>(() => {
@@ -150,14 +158,39 @@ export function App() {
     return () => window.clearTimeout(timeout);
   }, [animationSpeed, game?.playerFeedback]);
 
+
   useEffect(() => {
-    if (!game?.trapFeedback) return;
-    const duration = animationDurations[animationSpeed].trapFeedback;
-    const timer = window.setTimeout(() => {
-      setGame((currentGame) => currentGame?.trapFeedback ? clearTrapFeedback(currentGame) : currentGame);
-    }, duration);
-    return () => window.clearTimeout(timer);
-  }, [animationSpeed, game?.trapFeedback]);
+    const prev = prevTrapFeedbackRef.current;
+    const current = game?.trapFeedback ?? null;
+    prevTrapFeedbackRef.current = current;
+    if (!prev && current?.consequence === 'discard-hand' && current.discardedCardId) {
+      setTrapDiscardAnimCardId(current.discardedCardId);
+    }
+    if (prev && !current) {
+      setTrapDiscardAnimCardId(null);
+      if (shellRef.current) {
+        shellRef.current.scrollTo({ top: shellRef.current.scrollHeight, behavior: 'smooth' });
+      }
+    }
+  }, [game?.trapFeedback]);
+
+  const prevShowTrapIntroRef = useRef(false);
+  useEffect(() => {
+    const prev = prevShowTrapIntroRef.current;
+    prevShowTrapIntroRef.current = showTrapIntro;
+    if (prev && !showTrapIntro && shellRef.current) {
+      shellRef.current.scrollTo({ top: shellRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  }, [showTrapIntro]);
+
+  const prevShowTrapLevelIntroRef = useRef(false);
+  useEffect(() => {
+    const prev = prevShowTrapLevelIntroRef.current;
+    prevShowTrapLevelIntroRef.current = showTrapLevelIntro;
+    if (prev && !showTrapLevelIntro && shellRef.current) {
+      shellRef.current.scrollTo({ top: shellRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  }, [showTrapLevelIntro]);
 
   useEffect(() => {
     if (!game?.treasureFeedback) return;
@@ -194,6 +227,19 @@ export function App() {
       return () => window.clearTimeout(timer);
     }
   }, [animationSpeed, game?.pendingCellRoll]);
+
+  useEffect(() => {
+    if (!game) return;
+    const prev = prevPendingTrapLevelDiscardRef.current;
+    const current = game.pendingTrapLevelDiscard;
+    prevPendingTrapLevelDiscardRef.current = current;
+    if (!prev && current) {
+      const SCAN_MS = 2000;
+      setShowTrapLevelIntro(true);
+      const timer = window.setTimeout(() => setShowTrapLevelIntro(false), SCAN_MS);
+      return () => window.clearTimeout(timer);
+    }
+  }, [game?.pendingTrapLevelDiscard]);
 
   useLayoutEffect(() => {
     if (!game) return;
@@ -525,7 +571,9 @@ export function App() {
                 }}
                 pendingHasteAttack={game.pendingHasteAttack}
                 onSelectEnemy={chooseEnemyTarget}
+                onShowDecks={() => setShowDecks(true)}
                 selectedEnemyInstanceId={selectedEnemyInstanceId}
+                xp={game.xp}
                 xpActionsNode={<>
                   {game.activeCombat?.phase === 'player' && game.mana !== null && !game.combatFeedback && (
                     <button disabled={game.xp < 1} onClick={rerollMana}>Relancer mana · 1 XP</button>
@@ -580,7 +628,7 @@ export function App() {
               {!game.activeCombat && game.phase === 'choose-destination' && game.movementDice && !movementAnim && (
                 <section className="tower-action-panel" aria-label="Resultat du deplacement">
                   <div className="dice-roll" aria-label={`Des de deplacement ${game.movementDice[0]} et ${game.movementDice[1]}`}>
-                    {game.movementDice.map((die, index) => <span className="die-face" key={`movement-die-${index}-${die}`}>{die}</span>)}
+                    {game.movementDice.map((die, index) => <DieFace key={`movement-die-${index}`} value={die} />)}
                   </div>
 
                   <button disabled={!canRerollMovementWithXp} onClick={rerollMovement}>Relancer les des · 1 XP</button>
@@ -593,51 +641,64 @@ export function App() {
                   <p className="muted">Lance le de pour reveler le resultat avant d'appliquer son effet.</p>
                   {game.pendingCellRoll.kind === 'trap' && <TrapReferenceCard />}
                   {game.pendingCellRoll.kind === 'treasure' && <TreasureReferenceCard />}
-                  <button className="action-pulse" onClick={() => setGame(rollPendingCellResolution(game))}>Lancer le de</button>
+                  {rollingCellDie ? (
+                    <RollingDie onSettle={() => {
+                      setRollingCellDie(false);
+                      setGame((g) => g ? rollPendingCellResolution(g) : g);
+                    }} />
+                  ) : (
+                    <button className="action-pulse" onClick={() => setRollingCellDie(true)}>
+                      Lancer le de
+                    </button>
+                  )}
                 </section>
               )}
-              {game.pendingTrapLevelDiscard && (
-                <section className="resolution-panel trap-resolution" aria-label="Piege niveau - defausse optionnelle">
+              {game.pendingTrapLevelDiscard && showTrapLevelIntro && (
+                <section className="resolution-panel trap-resolution trap-level-intro" aria-live="assertive">
                   <p className="eyebrow">Piège niveau {game.pendingTrapLevelDiscard.level}</p>
-                  <h3>{game.pendingTrapLevelDiscard.cellLabel}</h3>
-                  <p className="muted">
-                    Résultat du dé : <strong>{game.pendingTrapLevelDiscard.dieResult}</strong>.
-                    Tu peux défausser des cartes de ta main pour ajouter leur coût en mana au jet de protection.
-                  </p>
-                  {game.pendingTrapLevelDiscard.manaBonus > 0 && (
-                    <p className="trap-mana-bonus">Bonus actuel : +{game.pendingTrapLevelDiscard.manaBonus} mana</p>
-                  )}
-                  {game.hand.length > 0 && (
-                    <div className="trap-discard-hand">
-                      <p className="muted small">Cartes en main (clique pour défausser) :</p>
-                      <div className="trap-discard-cards">
-                        {game.hand.map((cardId, index) => {
-                          const cardRaw = getAction(cardId);
-                          const card = cardRaw ? resolveCardForDisplay(cardRaw, game.flippedCards) : null;
-                          if (!card) return null;
-                          return (
-                            <button
-                              key={`trap-discard-${cardId}-${index}`}
-                              className="trap-discard-card-btn"
-                              onClick={() => setGame(discardCardForTrapBonus(game, index))}
-                            >
-                              <span className="tdc-name">{card.text}</span>
-                              <span className="tdc-mana">+{card.manaCost ?? 0}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                  <button
-                    className="action-pulse"
-                    onClick={() => setGame(resolveTrapLevelWithBonus(game))}
-                  >
-                    Lancer le dé de protection
-                    {game.pendingTrapLevelDiscard.manaBonus > 0 && ` (+${game.pendingTrapLevelDiscard.manaBonus})`}
-                  </button>
+                  <TrapReferenceCard
+                    highlightedRoll={game.pendingTrapLevelDiscard.dieResult}
+                    scanning
+                  />
                 </section>
               )}
+              {game.pendingTrapLevelDiscard && !showTrapLevelIntro && (() => {
+                const { level, manaBonus, dieResult, discardedForBonus } = game.pendingTrapLevelDiscard;
+                const needed = level - manaBonus;
+                const goodFaces = Math.min(6, Math.max(0, 7 - Math.max(1, needed)));
+                const pct = Math.round((goodFaces / 6) * 100);
+                const chanceLabel = needed <= 1
+                  ? '✓ Aucun dégât garanti (6/6)'
+                  : needed > 6
+                  ? `Dégâts inévitables · min ${needed - 6} dégât(s)`
+                  : `Jet ≥ ${needed} · ${goodFaces}/6 chances (${pct}%)`;
+                return (
+                  <section className="resolution-panel trap-resolution" aria-label="Piege niveau - defausse optionnelle">
+                    <p className="eyebrow">Piège niveau {level}</p>
+                    <p className="muted">
+                      Tu peux défausser des cartes de ta main pour ajouter leur coût en mana au jet de protection.
+                    </p>
+                    <p className="trap-chance-formula">{chanceLabel}</p>
+                    <div className="trap-resolve-row">
+                      <button
+                        className="action-pulse"
+                        onClick={() => setGame(resolveTrapLevelWithBonus(game))}
+                      >
+                        Lancer le dé de protection
+                        {manaBonus > 0 && ` (+${manaBonus})`}
+                      </button>
+                      {discardedForBonus.length > 0 && (
+                        <button
+                          className="trap-undo-discard"
+                          onClick={() => setGame(undoTrapDiscard(game))}
+                        >
+                          ↩ Annuler
+                        </button>
+                      )}
+                    </div>
+                  </section>
+                );
+              })()}
               {game.pendingTreasureChoice && (
                 <section className="resolution-panel treasure-choice-panel" aria-label="Choix de carte tresor">
                   <p className="eyebrow">Trésor {game.pendingTreasureChoice.dieResult}</p>
@@ -667,26 +728,53 @@ export function App() {
               {game.trapFeedback && (
                 <section className="trap-feedback-panel" aria-live="assertive" key={`tf-${game.trapFeedback.dieResult}-${game.trapFeedback.defenseRoll ?? 0}-${game.trapFeedback.consequence}`}>
                   <p className="eyebrow">{describeTrapConsequenceTitle(game.trapFeedback)}</p>
-                  <div className="dice-roll trap-feedback-dice">
-                    <span className="die-face">{game.trapFeedback.dieResult}</span>
-                    {game.trapFeedback.defenseRoll !== undefined && (
+                  {game.trapFeedback.consequence === 'level-trap' ? (() => {
+                    const { defenseRoll, manaBonus = 0, trapLevel = 0, damage } = game.trapFeedback;
+                    const effective = (defenseRoll ?? 0) + manaBonus;
+                    const success = damage === 0;
+                    return (
                       <>
-                        <span className="trap-dice-vs" aria-hidden="true">vs</span>
-                        <span className="die-face trap-defense-die">{game.trapFeedback.defenseRoll}</span>
+                        <div className="trap-level-result">
+                          <div className="dice-roll">
+                            <DieFace value={defenseRoll!} modifier="trap-defense-die" />
+                          </div>
+                          {manaBonus > 0 && (
+                            <span className="trap-level-bonus">+ {manaBonus} bonus</span>
+                          )}
+                          <span className="trap-level-total"
+                            style={{ color: success ? '#86efac' : '#fca5a5' }}>
+                            = {effective} {success ? '≥' : '<'} {trapLevel}
+                          </span>
+                        </div>
+                        <p className={`trap-feedback-consequence${success ? ' trap-consequence-ok' : ' trap-consequence-damage'}`}>
+                          {success ? 'Protection réussie — aucun dégât !' : `${damage} dégât${damage > 1 ? 's' : ''} subi${damage > 1 ? 's' : ''} !`}
+                        </p>
                       </>
-                    )}
-                  </div>
-                  <TrapReferenceCard highlightedRoll={game.trapFeedback.dieResult} />
-                  <p className={`trap-feedback-consequence${game.trapFeedback.damage > 0 ? ' trap-consequence-damage' : ' trap-consequence-ok'}`}>
-                    {describeTrapConsequence(game.trapFeedback)}
-                  </p>
+                    );
+                  })() : (
+                    <>
+                      <div className="dice-roll trap-feedback-dice">
+                        <DieFace value={game.trapFeedback.dieResult} />
+                      </div>
+                      <TrapReferenceCard highlightedRoll={game.trapFeedback.dieResult} />
+                      <p className={`trap-feedback-consequence${game.trapFeedback.damage > 0 ? ' trap-consequence-damage' : ' trap-consequence-ok'}`}>
+                        {describeTrapConsequence(game.trapFeedback)}
+                      </p>
+                    </>
+                  )}
+                  <button
+                    className="action-pulse"
+                    onClick={() => setGame(clearTrapFeedback(game))}
+                  >
+                    Continuer
+                  </button>
                 </section>
               )}
               {game.treasureFeedback && (
                 <section className="treasure-feedback-panel" aria-live="assertive" key={`trf-${game.treasureFeedback.dieResult}-${game.treasureFeedback.consequence}`}>
                   <p className="eyebrow">Résultat du trésor</p>
                   <div className="dice-roll">
-                    <span className="die-face treasure-die">{game.treasureFeedback.dieResult}</span>
+                    <DieFace value={game.treasureFeedback.dieResult} modifier="treasure-die" />
                   </div>
                   <TreasureReferenceCard highlightedRoll={game.treasureFeedback.dieResult} />
                   <p className="treasure-feedback-consequence">
@@ -696,7 +784,6 @@ export function App() {
               )}
               <p className="eyebrow tower-footer-info">{selectedBoss?.name ?? 'Boss'} · Tour {towerProgress} · Séquence {game.towerSequenceCount}/3</p>
               {game.phase === 'victory' && <p className="status win">Victoire prototype.</p>}
-              {game.phase === 'game-over' && <p className="status danger">Defaite.</p>}
             </>
           )}
         </section>
@@ -717,6 +804,14 @@ export function App() {
           game={game}
           onInspectCard={inspectCardFromHand}
           onPlayCard={playCardFromHand}
+          onDiscardForTrap={game.pendingTrapLevelDiscard
+            ? (cardId, handIndex) => setGame(discardCardForTrapBonus(game, handIndex))
+            : undefined}
+          trapDiscardAnimCardId={
+            game.trapFeedback?.consequence === 'discard-hand'
+              ? game.trapFeedback.discardedCardId
+              : undefined
+          }
           unaffordableCardIds={unplayableCardIds}
         />
 
@@ -724,6 +819,19 @@ export function App() {
           <LogOverlay game={game} onClose={() => setShowLog(false)} onNewGame={startNewGame} />
         )}
       </section>
+
+      {game.phase === 'game-over' && (
+        <div aria-label="Défaite" aria-modal="true" className="game-over-overlay" role="dialog">
+          <div className="game-over-card">
+            <span aria-hidden="true" className="game-over-icon">💀</span>
+            <h2 className="game-over-title">Défaite</h2>
+            <p className="game-over-text">L'aventurière a succombé à ses blessures.</p>
+            <button className="primary-button game-over-restart" onClick={startNewGame} type="button">
+              Nouvelle partie
+            </button>
+          </div>
+        </div>
+      )}
 
       <CardInspectOverlay
         card={inspectedCard}

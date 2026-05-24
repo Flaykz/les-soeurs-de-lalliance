@@ -152,13 +152,14 @@
     gap: 10px;
     align-items: start;
     justify-items: stretch;
+    --card-w: calc((100cqw - 2 * 8px) / 3);
   }
 
   .enemy-target-grid {
     grid-column: 1 / -1;
     grid-row: 1;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    display: flex;
+    justify-content: space-between;
     gap: 8px;
     width: 100%;
   }
@@ -166,7 +167,7 @@
   .player-character-card {
     grid-column: 1;
     grid-row: 2;
-    width: calc((100cqw - (var(--n, 3) - 1) * 8px) / var(--n, 3));
+    width: var(--card-w);
     flex: none;
     min-height: 190px;
   }
@@ -207,10 +208,15 @@
   }
 
   .enemy-target-card {
-    width: 100%;
+    width: var(--card-w);
+    flex: 0 0 var(--card-w);
     min-width: 0;
     padding: 8px;
     min-height: 190px;
+  }
+
+  .enemy-target-card:first-child:last-child {
+    margin: 0 auto;
   }
 
   .enemy-card-art {
