@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.codenomad/
+.env
+.env.*
+graphify-out/
+.graphifyignore
+.idea
+.opencode
+docs/pdf/

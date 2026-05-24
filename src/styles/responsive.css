@@ -1,0 +1,252 @@
+@media (min-width: 761px) {
+  .game-shell {
+    padding-bottom: 0;
+  }
+}
+
+@media (max-width: 1020px) {
+  .game-hud {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard {
+    grid-template-columns: repeat(6, minmax(70px, 1fr));
+    overflow-x: auto;
+  }
+
+  .quick-actions {
+    grid-template-columns: repeat(5, minmax(88px, 1fr));
+  }
+
+  .play-area {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .shell,
+  .game-shell {
+    width: min(100% - 12px, 100%);
+    padding-top: 6px;
+  }
+
+  .game-shell {
+    width: min(100% - 8px, 100%);
+    padding-top: 106px;
+    padding-bottom: 150px;
+  }
+
+  .status-bubbles {
+    top: 6px;
+    left: 6px;
+    max-width: calc(100% - 120px);
+    gap: 5px;
+  }
+
+  .status-bubble {
+    min-width: 46px;
+    min-height: 36px;
+    padding: 6px 9px;
+    font-size: 0.9rem;
+  }
+
+  .floating-actions {
+    top: 54px;
+    width: calc(100% - 12px);
+  }
+
+  .primary-icon-action {
+    width: 48px;
+    height: 48px;
+  }
+
+  .utility-actions {
+    top: 6px;
+    right: 6px;
+    gap: 5px;
+  }
+
+  .utility-actions button {
+    width: 36px;
+    height: 36px;
+    font-size: 1.05rem;
+  }
+
+  .hero {
+    padding: 20px;
+  }
+
+  .game-hud {
+    top: 4px;
+    border-radius: 18px;
+    padding: 8px;
+  }
+
+  .game-title h1 {
+    font-size: 1.25rem;
+  }
+
+  .dashboard {
+    display: flex;
+    gap: 8px;
+    padding-bottom: 4px;
+  }
+
+  .stat {
+    flex: 0 0 84px;
+    padding: 8px;
+  }
+
+  .quick-actions {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .quick-actions button {
+    flex: 0 0 auto;
+  }
+
+  .grid,
+  .setup-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .compact-summary {
+    margin: 8px 0;
+    padding: 10px;
+  }
+
+  .tower-sequence {
+    justify-content: start;
+    overflow-x: auto;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    grid-template-columns: none;
+  }
+
+  .panel {
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .play-area {
+    gap: 10px;
+  }
+
+  .combat-arena {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+
+  .combat-center {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    min-height: auto;
+    gap: 10px;
+  }
+
+
+  .player-character-card {
+    width: min(180px, 100%);
+  }
+
+  .tower-grid {
+    gap: 4px;
+  }
+
+  .tower-cell {
+    border-radius: 10px;
+    padding: 1px;
+  }
+
+  .tower-cell .cell-icon {
+    min-height: 0;
+  }
+
+  .cell-coordinates {
+    margin-bottom: 1px;
+  }
+
+  .actions-row {
+    grid-template-columns: 1fr;
+  }
+
+  .enemy-target-grid {
+    grid-template-columns: repeat(auto-fit, minmax(154px, 1fr));
+    justify-items: center;
+  }
+
+  .enemy-target-card {
+    width: min(180px, 100%);
+  }
+
+  .hand-panel {
+    right: 6px;
+    bottom: 6px;
+    left: 6px;
+    padding: 8px;
+  }
+
+  .hand-tile {
+    flex-basis: 112px;
+    width: 112px;
+    min-height: 156px;
+    border-radius: 13px;
+  }
+
+  .mana-chip {
+    width: 30px;
+    height: 30px;
+    font-size: 0.82rem;
+  }
+
+  .hand-card-kind {
+    font-size: 2rem;
+  }
+
+  .effect-badge {
+    font-size: 0.82rem;
+    padding: 3px 6px;
+  }
+
+  .selected-card-panel {
+    right: 0;
+    bottom: calc(100% + 8px);
+    left: 0;
+    grid-template-columns: 1fr;
+    width: auto;
+    max-height: 48vh;
+    overflow: auto;
+    padding: 12px;
+  }
+
+  .selected-card-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .overlay-card {
+    top: auto;
+    right: 6px;
+    bottom: 6px;
+    left: 6px;
+    width: auto;
+    max-height: min(86vh, 720px);
+    border-radius: 20px;
+  }
+
+  .wide-overlay {
+    left: 6px;
+  }
+
+  .tower-heading {
+    display: block;
+  }
+
+  .tower-heading h3 {
+    text-align: left;
+  }
+}

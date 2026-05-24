@@ -1,0 +1,154 @@
+.shell {
+  width: min(1180px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 24px 0;
+}
+
+.game-shell {
+  width: min(1440px, calc(100% - 24px));
+  padding-top: 76px;
+  padding-bottom: 190px;
+}
+
+.hero,
+.game-hud,
+.panel,
+.card,
+.stat,
+.overlay-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(24, 24, 27, 0.88);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(18px);
+}
+
+.hero {
+  border-radius: 22px;
+  padding: 28px;
+  background: linear-gradient(135deg, rgba(39, 39, 42, 0.92), rgba(12, 12, 13, 0.94));
+}
+
+.hero p:last-child {
+  margin-bottom: 0;
+}
+
+.animation-speed-control {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 18px;
+}
+
+.animation-speed-control label {
+  color: #d4d4d8;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.game-hud {
+  position: sticky;
+  top: 8px;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(420px, 1.8fr) max-content;
+  gap: 12px;
+  align-items: center;
+  border-radius: 22px;
+  padding: 10px;
+}
+
+.game-title h1,
+.game-title p {
+  margin-bottom: 0;
+}
+
+.game-title h1 {
+  max-width: 28rem;
+  overflow: hidden;
+  font-size: clamp(1.25rem, 2.6vw, 2rem);
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-title p:last-child {
+  margin-top: 4px;
+  color: #a3a3a3;
+  font-size: 0.85rem;
+}
+
+.dashboard,
+.grid,
+.game-info-grid,
+.cards,
+.play-area,
+.actions-row,
+.dice-row,
+.path-choice,
+.setup-catalog,
+.tower-sequence,
+.quick-actions {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard {
+  grid-template-columns: repeat(6, minmax(74px, 1fr));
+}
+
+.stat {
+  border-radius: 16px;
+  padding: 9px 10px;
+  background: rgba(12, 12, 13, 0.68);
+}
+
+.stat span {
+  display: block;
+  color: #a3a3a3;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.stat strong {
+  display: block;
+  margin-top: 3px;
+  font-size: clamp(1.1rem, 2.2vw, 1.55rem);
+  line-height: 1;
+}
+
+.quick-actions {
+  grid-template-columns: repeat(2, max-content);
+  justify-content: end;
+  gap: 8px;
+}
+
+.grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.play-area {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  margin-bottom: 14px;
+}
+
+.game-info-grid {
+  display: block;
+}
+
+.panel {
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.board-panel {
+  min-width: 0;
+}
+
+.actions-row,
+.dice-row {
+  grid-template-columns: repeat(auto-fit, minmax(138px, 1fr));
+  align-items: center;
+}

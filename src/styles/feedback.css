@@ -1,0 +1,515 @@
+.resolution-panel,
+.tower-action-panel,
+.event-summary {
+  border: 1px solid rgba(250, 204, 21, 0.24);
+  border-radius: 16px;
+  padding: 12px;
+  margin: 12px 0;
+  background: rgba(12, 12, 13, 0.62);
+}
+
+.tower-action-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.tower-action-panel .muted {
+  margin: 0;
+}
+
+.resolution-panel {
+  text-align: center;
+}
+
+.resolution-panel h3 {
+  margin-bottom: 6px;
+}
+
+.event-summary {
+  border-color: rgba(255, 255, 255, 0.1);
+  margin-bottom: 0;
+}
+
+.event-summary ol {
+  display: grid;
+  gap: 5px;
+  margin: 6px 0 0;
+  padding-left: 20px;
+  color: #d4d4d8;
+  font-size: 0.86rem;
+}
+
+.event-summary li:first-child {
+  color: #f5f5f5;
+  font-weight: 800;
+}
+
+/* ── Feedback trésor ─────────────────────────────────────────── */
+
+.treasure-feedback-panel {
+  border: 1px solid rgba(250, 204, 21, 0.48);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin: 12px 0;
+  background: rgba(20, 16, 4, 0.88);
+  text-align: center;
+  animation: trapFeedbackIn 0.4s ease both;
+}
+
+.die-face.treasure-die {
+  border-color: rgba(250, 204, 21, 0.9);
+  color: #facc15;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(250, 204, 21, 0.2), transparent 32px),
+    rgba(20, 14, 0, 0.94);
+  box-shadow: 0 0 16px rgba(250, 204, 21, 0.22), 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.treasure-feedback-consequence {
+  margin: 8px 0 0;
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #facc15;
+  letter-spacing: 0.03em;
+  animation: treasureConsequence var(--trap-feedback-ms, 2400ms) ease both;
+}
+
+/* ── Carte de référence trésor ───────────────────────────────── */
+
+.treasure-ref-card {
+  background: rgba(20, 14, 0, 0.90);
+  border: 1px solid rgba(250, 204, 21, 0.28);
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin: 10px auto;
+  width: 100%;
+  max-width: 300px;
+}
+
+.treasure-ref-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(250, 204, 21, 0.5);
+  margin: 0 0 8px;
+}
+
+.treasure-ref-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  border-radius: 7px;
+}
+
+.treasure-ref-row.highlighted {
+  background: rgba(250, 204, 21, 0.12);
+  animation: treasureRowReveal 0.45s ease both;
+}
+
+.treasure-ref-dice {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.treasure-ref-die {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(250, 204, 21, 0.38);
+  border-radius: 5px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(250, 204, 21, 0.75);
+  background: rgba(20, 14, 0, 0.7);
+}
+
+.treasure-ref-row.highlighted .treasure-ref-die {
+  border-color: rgba(250, 204, 21, 0.9);
+  background: rgba(250, 204, 21, 0.15);
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.3);
+  color: #facc15;
+}
+
+.treasure-ref-label {
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.treasure-ref-row.highlighted .treasure-ref-label {
+  color: #facc15;
+  font-weight: 700;
+}
+
+@keyframes treasureRowReveal {
+  0%   { opacity: 0; background: rgba(250, 204, 21, 0.28); }
+  60%  { background: rgba(250, 204, 21, 0.18); }
+  100% { opacity: 1; background: rgba(250, 204, 21, 0.12); }
+}
+
+/* ── Overlay d'annonce de piège ──────────────────────────────── */
+
+.trap-intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.72);
+  animation: trapOverlayFade 1.8s ease both;
+  pointer-events: none;
+}
+
+.trap-intro-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  border: 2px solid rgba(250, 204, 21, 0.55);
+  border-radius: 26px;
+  padding: 38px 64px;
+  background: rgba(18, 18, 20, 0.97);
+  box-shadow: 0 0 80px rgba(250, 204, 21, 0.18), 0 32px 72px rgba(0, 0, 0, 0.48);
+  animation: trapCardReveal 1.8s ease both;
+}
+
+.trap-intro-icon {
+  font-size: 3.6rem;
+  color: #facc15;
+  animation: trapIconWobble 1.8s ease both;
+}
+
+.trap-intro-title {
+  margin: 0;
+  font-size: 2.4rem;
+  font-weight: 1000;
+  color: #facc15;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.trap-intro-sub {
+  margin: 0;
+  color: #a3a3a3;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── Feedback résultat du piège ──────────────────────────────── */
+
+.trap-feedback-panel {
+  border: 1px solid rgba(250, 204, 21, 0.32);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin: 12px 0;
+  background: rgba(12, 12, 13, 0.78);
+  text-align: center;
+  animation: trapFeedbackIn 0.4s ease both;
+}
+
+.trap-feedback-dice {
+  margin: 10px 0;
+  gap: 14px;
+}
+
+.trap-dice-vs {
+  color: #71717a;
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  align-self: center;
+}
+
+.die-face.trap-defense-die {
+  border-color: rgba(56, 189, 248, 0.72);
+  color: #38bdf8;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(56, 189, 248, 0.12), transparent 32px),
+    rgba(4, 14, 22, 0.94);
+  animation-delay: calc(var(--dice-animation-ms, 750ms) * 0.18);
+}
+
+.trap-feedback-consequence {
+  margin: 6px 0 0;
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+}
+
+.trap-consequence-damage {
+  color: #fca5a5;
+  animation: trapConsequenceDamage var(--trap-feedback-ms, 2400ms) ease both;
+}
+
+.trap-consequence-ok {
+  color: #86efac;
+  animation: trapConsequenceOk var(--trap-feedback-ms, 2400ms) ease both;
+}
+
+.trap-resolution {
+  animation: trapPanelIn 0.45s ease both;
+}
+
+/* ── Carte de référence piège ────────────────────────────────── */
+
+.trap-ref-card {
+  background: rgba(12, 8, 4, 0.92);
+  border: 1px solid rgba(251, 146, 60, 0.28);
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin: 10px auto;
+  width: 100%;
+  max-width: 300px;
+}
+
+.trap-ref-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(251, 146, 60, 0.5);
+  margin: 0 0 8px;
+}
+
+.trap-ref-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  border-radius: 7px;
+}
+
+.trap-ref-row.highlighted {
+  background: rgba(239, 68, 68, 0.12);
+  animation: trapRowReveal 0.45s ease both;
+}
+
+.trap-ref-dice {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.trap-ref-die {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(251, 146, 60, 0.38);
+  border-radius: 5px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(251, 146, 60, 0.75);
+  background: rgba(12, 8, 4, 0.7);
+}
+
+.trap-ref-row.highlighted .trap-ref-die {
+  border-color: rgba(252, 165, 165, 0.9);
+  background: rgba(239, 68, 68, 0.18);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.trap-ref-label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.trap-ref-row.highlighted .trap-ref-label {
+  color: #fca5a5;
+  font-weight: 700;
+}
+
+.trap-ref-sub {
+  font-size: 0.72rem;
+  color: rgba(56, 189, 248, 0.7);
+  font-weight: 400;
+}
+
+.trap-ref-row.highlighted .trap-ref-sub {
+  color: #38bdf8;
+}
+
+@keyframes trapRowReveal {
+  0%   { opacity: 0; background: rgba(239, 68, 68, 0.28); }
+  60%  { background: rgba(239, 68, 68, 0.2); }
+  100% { opacity: 1; background: rgba(239, 68, 68, 0.12); }
+}
+
+/* ── Keyframes feedback ──────────────────────────────────────── */
+
+@keyframes treasureConsequence {
+  0%, 10% { opacity: 0; transform: scale(0.88) translateY(6px); }
+  22%     { opacity: 1; transform: scale(1.1) translateY(0); }
+  36%     { transform: scale(1); }
+  82%     { opacity: 1; }
+  100%    { opacity: 0.7; }
+}
+
+@keyframes trapOverlayFade {
+  0%   { opacity: 0; }
+  12%  { opacity: 1; }
+  72%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes trapCardReveal {
+  0%   { opacity: 0; transform: scale(0.82) translateY(18px); }
+  18%  { opacity: 1; transform: scale(1.04) translateY(0); }
+  30%  { transform: scale(1); }
+  68%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.93) translateY(-10px); }
+}
+
+@keyframes trapIconWobble {
+  0%, 18% { transform: rotate(-14deg) scale(0.8); }
+  32%      { transform: rotate(9deg) scale(1.18); }
+  46%      { transform: rotate(-5deg) scale(1); }
+  60%      { transform: rotate(0deg) scale(1); }
+  100%     { transform: rotate(0deg) scale(0.95); }
+}
+
+@keyframes trapFeedbackIn {
+  0%   { opacity: 0; transform: scale(0.93) translateY(10px); }
+  55%  { transform: scale(1.01); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes trapConsequenceDamage {
+  0%, 12% { opacity: 0; transform: scale(0.85); }
+  22%     { opacity: 1; transform: scale(1.12); }
+  35%     { transform: scale(1); }
+  82%     { opacity: 1; }
+  100%    { opacity: 0.7; }
+}
+
+@keyframes trapConsequenceOk {
+  0%, 12% { opacity: 0; transform: scale(0.9); }
+  22%     { opacity: 1; transform: scale(1.05); }
+  35%     { transform: scale(1); }
+  82%     { opacity: 1; }
+  100%    { opacity: 0.7; }
+}
+
+@keyframes trapPanelIn {
+  0%   { opacity: 0; transform: scale(0.92) translateY(12px); }
+  60%  { transform: scale(1.01); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Défausse optionnelle avant piège niveau X ───────────────── */
+
+.trap-mana-bonus {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fb923c;
+  margin: 6px 0;
+}
+
+.trap-discard-hand {
+  margin: 10px 0;
+  text-align: left;
+}
+
+.trap-discard-hand .small {
+  font-size: 0.78rem;
+  margin: 0 0 6px;
+}
+
+.trap-discard-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.trap-discard-card-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 10px;
+  background: rgba(251, 146, 60, 0.08);
+  border: 1px solid rgba(251, 146, 60, 0.35);
+  border-radius: 10px;
+  color: #f5f5f5;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.15s;
+  min-width: 64px;
+}
+
+.trap-discard-card-btn:hover {
+  background: rgba(251, 146, 60, 0.2);
+}
+
+.tdc-name {
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.tdc-mana {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fb923c;
+}
+
+/* ── Choix de carte trésor ───────────────────────────────────── */
+
+.treasure-choice-panel {
+  animation: trapPanelIn 0.45s ease both;
+}
+
+.treasure-card-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.treasure-choice-card-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 12px;
+  background: rgba(250, 204, 21, 0.06);
+  border: 1px solid rgba(250, 204, 21, 0.35);
+  border-radius: 10px;
+  color: #f5f5f5;
+  cursor: pointer;
+  font-size: 0.82rem;
+  transition: background 0.15s;
+  min-width: 72px;
+  max-width: 130px;
+}
+
+.treasure-choice-card-btn:hover {
+  background: rgba(250, 204, 21, 0.18);
+}
+
+.tcc-name {
+  font-size: 0.78rem;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.tcc-mana {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #facc15;
+}
