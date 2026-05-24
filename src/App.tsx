@@ -33,6 +33,7 @@ import {
   resolveTrapLevelWithBonus,
   endCombatRound,
   endPlayerPhase,
+  cardNeedsTarget,
   getAction,
   resolveCardForDisplay,
   getBoss,
@@ -73,7 +74,7 @@ export function App() {
   const [showTowerStack, setShowTowerStack] = useState(false);
   const [showDecks, setShowDecks] = useState(false);
   const [selectedEnemyInstanceId, setSelectedEnemyInstanceId] = useState<string | null>(null);
-  const [selectedHandIndex, setSelectedHandIndex] = useState<number | null>(null);
+  const [inspectedHandIndex, setInspectedHandIndex] = useState<number | null>(null);
   const [combatMessage, setCombatMessage] = useState<string | null>(null);
   const [inspectedCard, setInspectedCard] = useState<ActionCard | null>(null);
   const [movementAnim, setMovementAnim] = useState<{ pathCellIds: string[]; step: number; pendingGame: GameState } | null>(null);
@@ -81,6 +82,8 @@ export function App() {
   const prevHealthRef = useRef<number | null>(null);
   const prevXpRef = useRef<number | null>(null);
   const prevPendingCellRollRef = useRef<GameState['pendingCellRoll'] | null>(null);
+  const shellRef = useRef<HTMLElement>(null);
+  const hasScrolledToBottomRef = useRef(false);
   const [animationSpeed, setAnimationSpeed] = useState<AnimationSpeed>(() => {
     const savedSpeed = localStorage.getItem(ANIMATION_SPEED_KEY);
     return isAnimationSpeed(savedSpeed) ? savedSpeed : defaultAnimationSpeed;
@@ -97,6 +100,13 @@ export function App() {
   useEffect(() => {
     if (!game || game.deck.length > 0 || game.discard.length === 0) return;
     setGame(refillActionDeckIfEmpty(game));
+  }, [game]);
+
+  useLayoutEffect(() => {
+    if (!game || hasScrolledToBottomRef.current || !shellRef.current) return;
+    hasScrolledToBottomRef.current = true;
+    const el = shellRef.current;
+    el.scrollTop = el.scrollHeight;
   }, [game]);
 
   useEffect(() => {
@@ -121,11 +131,6 @@ export function App() {
       setSelectedEnemyInstanceId(null);
     }
   }, [game?.activeCombat, selectedEnemyInstanceId]);
-
-  useEffect(() => {
-    if (!game || selectedHandIndex === null) return;
-    if (selectedHandIndex >= game.hand.length) setSelectedHandIndex(null);
-  }, [game, selectedHandIndex]);
 
   useEffect(() => {
     if (!game?.combatFeedback) return;
@@ -196,12 +201,18 @@ export function App() {
     prevXpRef.current = game.xp;
   });
 
+
   if (!game) {
     return (
       <BossSelection
         animationSpeed={animationSpeed}
         onAnimationSpeedChange={setAnimationSpeed}
-        onStartGame={setGame}
+        onStartGame={(state) => {
+          setGame(state);
+          requestAnimationFrame(() => {
+            document.querySelector('.game-shell')?.scrollTo({ top: 0, behavior: 'instant' });
+          });
+        }}
       />
     );
   }
@@ -225,9 +236,20 @@ export function App() {
   const topAdvancedCards = game.advancedDecks.map((deck) => deck[0] ? getAction(deck[0]) ?? null : null);
   const hasPendingHit = Boolean(game.activeCombat && game.activeCombat.pendingHits.length > 0 && !game.combatFeedback);
   const canActInCombat = Boolean(game.activeCombat?.phase === 'player' && game.mana !== null && !game.combatFeedback && !hasPendingHit);
+  const unplayableCardIds = new Set(
+    canActInCombat
+      ? game.hand.filter((cardId) => {
+          const c = getAction(cardId);
+          if (!c) return false;
+          const face = resolveCardForDisplay(c, game.flippedCards);
+          if (face.manaCost != null && face.manaCost > (game.mana ?? 0)) return true;
+          if (cardNeedsTarget(c, game.flippedCards) && !selectedEnemyInstanceId) return true;
+          return false;
+        })
+      : []
+  );
   const buyActionDisabledReason = getBuyActionDisabledReason(game);
   const canRerollMovementWithXp = game.xp >= 1 && Boolean(game.movementDice) && (game.phase === 'choose-destination' || game.phase === 'choose-path') && !game.activeCombat;
-  const showExplorationSequence = !game.activeCombat && game.phase !== 'victory' && game.phase !== 'game-over';
   const animationStyle = {
     '--combat-animation-ms': `${animationDurations[animationSpeed].defeat}ms`,
     '--dice-animation-ms': `${animationDurations[animationSpeed].damage}ms`,
@@ -248,8 +270,24 @@ export function App() {
         setMovementAnim({ pathCellIds: paths[0].cellIds, step: 1, pendingGame: nextGame });
         return;
       }
+    } else if (nextGame.pendingMovementPaths.length === 1) {
+      const path = nextGame.pendingMovementPaths[0];
+      const confirmed = confirmMovementPath(nextGame);
+      if (path.cellIds.length > 1) {
+        setMovementAnim({ pathCellIds: path.cellIds, step: 1, pendingGame: confirmed });
+        return;
+      }
+      setGame(confirmed);
+      return;
     }
     setGame(nextGame);
+  }
+
+  function cyclePath(dir: 1 | -1) {
+    if (!game) return;
+    const total = game.pendingMovementPaths.length;
+    const current = game.selectedMovementPathIndex ?? 0;
+    setGame(chooseMovementPath(game, (current + dir + total) % total));
   }
 
   function handleConfirmMovement() {
@@ -316,14 +354,15 @@ export function App() {
       return;
     }
 
-    if (!selectedEnemyInstanceId) {
+    const needsTarget = cardRaw ? cardNeedsTarget(cardRaw, game.flippedCards) : false;
+    if (needsTarget && !selectedEnemyInstanceId) {
       setCombatMessage("Selectionne d'abord un ennemi avant de jouer une carte.");
       return;
     }
 
     setCombatMessage(null);
     setSelectedHandIndex(null);
-    setGame(playActionCard(game, cardId, selectedEnemyInstanceId));
+    setGame(playActionCard(game, cardId, needsTarget ? selectedEnemyInstanceId : null));
   }
 
   function buyActionCard() {
@@ -367,22 +406,26 @@ export function App() {
     setGame(banishPlayedCardWithXp(game));
   }
 
-  function discardSelectedCardForMana() {
-    if (!game || selectedHandIndex === null) return;
-
-    const disabledReason = getDiscardForManaDisabledReason(game, selectedHandIndex);
-    if (disabledReason) {
-      setCombatMessage(disabledReason);
-      return;
-    }
-
-    setCombatMessage(null);
-    setSelectedHandIndex(null);
-    setGame(discardHandCardForMana(game, selectedHandIndex));
+  function inspectCardFromHand(card: ActionCard, handIndex: number) {
+    setInspectedCard(card);
+    setInspectedHandIndex(handIndex);
   }
 
+  function closeInspect() {
+    setInspectedCard(null);
+    setInspectedHandIndex(null);
+  }
+
+  function discardInspectedCardForMana() {
+    if (!game || inspectedHandIndex === null) return;
+    setCombatMessage(null);
+    setGame(discardHandCardForMana(game, inspectedHandIndex));
+  }
+
+  const hasFloatingBar = false;
+
   return (
-    <main className="shell game-shell" style={animationStyle}>
+    <main className={`shell game-shell${hasFloatingBar ? ' has-floating-bar' : ''}`} ref={shellRef} style={animationStyle}>
       <section className="status-bubbles" aria-label="Etat de partie">
         <span
           className={`status-bubble${healthDelta < 0 ? ' bubble-damaged' : healthDelta > 0 ? ' bubble-healed' : ''}`}
@@ -395,34 +438,15 @@ export function App() {
           title="Experience"
         ><span aria-hidden="true">✦</span>{game.xp}</span>
         <span className="status-bubble" title="Potions"><span aria-hidden="true">✚</span>{game.potions}</span>
-        {showExplorationSequence && <span className="status-bubble" title="Sequence"><span aria-hidden="true">⇧</span>{game.towerSequenceCount}/3</span>}
       </section>
 
-      <section className="floating-actions" aria-label="Action principale">
-        {!game.activeCombat && game.phase === 'choose-path' && !movementAnim && (
-          <div className="path-choice compact-path-choice">
-            {game.pendingMovementPaths.map((movement, index) => (
-              <button
-                className={index === game.selectedMovementPathIndex ? 'selected' : ''}
-                key={`${movement.steps}-${movement.cellIds.join('-')}`}
-                onClick={() => setGame(chooseMovementPath(game, index))}
-              >
-                {movement.steps} · {describeMovementPath(game, movement)}
-              </button>
-            ))}
-            <button className="primary-icon-action" onClick={handleConfirmMovement} title="Valider ce chemin" aria-label="Valider ce chemin">✓</button>
-            <button disabled={!canRerollMovementWithXp} onClick={rerollMovement}>Relancer · 1 XP</button>
-          </div>
-        )}
-      </section>
+      <section className="floating-actions" aria-label="Action principale" />
 
       <section className="utility-actions" aria-label="Actions utilitaires">
         <button onClick={() => setShowDecks(true)} title="Paquets" aria-label="Paquets">▤</button>
         <button onClick={() => setShowTowerStack(true)} title="Tours" aria-label="Tours">▦</button>
         <button onClick={() => setShowLog(true)} title="Journal" aria-label="Journal">☰</button>
         <button onClick={() => setGame(usePotion(game))} disabled={game.potions <= 0} title="Utiliser une potion" aria-label="Utiliser une potion">✚</button>
-        <button onClick={buyPotion} disabled={game.xp < 3 || game.potions >= 3} title="Acheter une potion pour 3 XP" aria-label="Acheter une potion pour 3 XP">✚XP</button>
-        <button onClick={startNewGame} title="Nouvelle partie" aria-label="Nouvelle partie">↻</button>
       </section>
 
       {showTowerStack && (
@@ -435,6 +459,7 @@ export function App() {
           game={game}
           onBuyAdvancedActionCard={buyAdvancedCard}
           onBuyActionCard={buyActionCard}
+          onBuyPotion={buyPotion}
           onClose={() => setShowDecks(false)}
           onInspect={setInspectedCard}
         />
@@ -517,11 +542,37 @@ export function App() {
             </>
           ) : (
             <>
-              <p className="eyebrow">{selectedBoss?.name ?? 'Boss'} · Tour {towerProgress} · Sequence {game.towerSequenceCount}/3</p>
-              <h2>{currentTower.name}</h2>
-              {game.phase === 'victory' && <p className="status win">Victoire prototype.</p>}
-              {game.phase === 'game-over' && <p className="status danger">Defaite.</p>}
-              {!game.activeCombat && !game.pendingCellRoll && game.phase === 'movement-roll' && (
+              <TowerGrid
+                game={game}
+                isActiveTower
+                animatedPosition={movementAnim ? movementAnim.pathCellIds[movementAnim.step] : undefined}
+                movementOptions={movementAnim ? [] : movementOptions}
+                onDestinationClick={handleDestinationClick}
+                selectedPath={selectedPath}
+                setGame={setGame}
+                tower={currentTower}
+              />
+              {!game.activeCombat && game.phase === 'choose-path' && !movementAnim && (
+                <div className="path-strip">
+                  <button className="path-nav" onClick={() => cyclePath(-1)} aria-label="Chemin précédent">‹</button>
+                  <span className="path-counter">{(game.selectedMovementPathIndex ?? 0) + 1} / {game.pendingMovementPaths.length}</span>
+                  <button className="path-nav" onClick={() => cyclePath(1)} aria-label="Chemin suivant">›</button>
+                  <button className="path-confirm" onClick={handleConfirmMovement} aria-label="Valider ce chemin">✓</button>
+                  {canRerollMovementWithXp && (
+                    <button className="path-reroll" onClick={rerollMovement}>↺ 1 XP</button>
+                  )}
+                </div>
+              )}
+              {!game.activeCombat &&
+                !game.pendingCellRoll &&
+                !game.pendingTrapLevelDiscard &&
+                !game.trapFeedback &&
+                !game.pendingTreasureChoice &&
+                game.pendingCombatGroups.length === 0 &&
+                game.pendingTraps.length === 0 &&
+                game.pendingTreasures.length === 0 &&
+                !game.pendingBossCellId &&
+                game.phase === 'movement-roll' && (
                 <section className="tower-action-panel" aria-label="Action de deplacement">
                   <button className="action-pulse" onClick={() => setGame(rollMovementDice(game))}>Lancer les des de deplacement</button>
                 </section>
@@ -531,7 +582,7 @@ export function App() {
                   <div className="dice-roll" aria-label={`Des de deplacement ${game.movementDice[0]} et ${game.movementDice[1]}`}>
                     {game.movementDice.map((die, index) => <span className="die-face" key={`movement-die-${index}-${die}`}>{die}</span>)}
                   </div>
-                  <p className="muted">Choisis une case jaune. Le de utilise sera deduit automatiquement.</p>
+
                   <button disabled={!canRerollMovementWithXp} onClick={rerollMovement}>Relancer les des · 1 XP</button>
                 </section>
               )}
@@ -643,17 +694,9 @@ export function App() {
                   </p>
                 </section>
               )}
-              <TowerGrid
-                game={game}
-                isActiveTower
-                animatedPosition={movementAnim ? movementAnim.pathCellIds[movementAnim.step] : undefined}
-                movementOptions={movementAnim ? [] : movementOptions}
-                onDestinationClick={handleDestinationClick}
-                selectedPath={selectedPath}
-                setGame={setGame}
-                tower={currentTower}
-              />
-              <p className="muted">Position actuelle : {currentCell.label}</p>
+              <p className="eyebrow tower-footer-info">{selectedBoss?.name ?? 'Boss'} · Tour {towerProgress} · Séquence {game.towerSequenceCount}/3</p>
+              {game.phase === 'victory' && <p className="status win">Victoire prototype.</p>}
+              {game.phase === 'game-over' && <p className="status danger">Defaite.</p>}
             </>
           )}
         </section>
@@ -672,25 +715,35 @@ export function App() {
       <section className="game-info-grid">
         <HandDock
           game={game}
-          onDiscardForMana={discardSelectedCardForMana}
-          onInspectCard={setInspectedCard}
+          onInspectCard={inspectCardFromHand}
           onPlayCard={playCardFromHand}
-          onSelectCard={setSelectedHandIndex}
-          selectedEnemyInstanceId={selectedEnemyInstanceId}
-          selectedHandIndex={selectedHandIndex}
+          unaffordableCardIds={unplayableCardIds}
         />
 
         {showLog && (
-          <LogOverlay game={game} onClose={() => setShowLog(false)} />
+          <LogOverlay game={game} onClose={() => setShowLog(false)} onNewGame={startNewGame} />
         )}
       </section>
 
       <CardInspectOverlay
         card={inspectedCard}
         canUpgrade={inspectedCard ? canUpgradeCard(game, inspectedCard.id) : false}
+        discardDisabled={inspectedHandIndex === null || Boolean(getDiscardForManaDisabledReason(game, inspectedHandIndex ?? 0))}
         flippedCards={game.flippedCards}
-        onClose={() => setInspectedCard(null)}
+        onClose={closeInspect}
+        onDiscardForMana={game.activeCombat && inspectedHandIndex !== null ? discardInspectedCardForMana : undefined}
+        onPlay={game.activeCombat && inspectedHandIndex !== null ? () => playCardFromHand(inspectedCard!.id) : undefined}
         onUpgrade={(cardId) => setGame(upgradeCard(game, cardId))}
+        playDisabledReason={(() => {
+          if (!game.activeCombat || inspectedHandIndex === null || !inspectedCard) return null;
+          if (game.combatFeedback) return 'Résolution en cours.';
+          if (game.activeCombat.phase !== 'player') return 'Attends la phase joueuse.';
+          if (game.mana === null) return "Lance d'abord le dé de mana.";
+          const resolved = resolveCardForDisplay(inspectedCard, game.flippedCards);
+          if (resolved.manaCost != null && resolved.manaCost > game.mana) return `Coût ${resolved.manaCost}, mana dispo ${game.mana}.`;
+          if (cardNeedsTarget(inspectedCard, game.flippedCards) && !selectedEnemyInstanceId) return 'Sélectionne une cible.';
+          return null;
+        })()}
         xp={game.xp}
       />
     </main>

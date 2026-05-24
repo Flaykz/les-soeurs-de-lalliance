@@ -1,5 +1,5 @@
 import type { ActionCard, ActiveCombat, CardFaceData, EnemyCard, GameState } from './types';
-import { getAction, getActiveCardFace, getEnemy } from './data-access';
+import { faceNeedsTarget, getAction, getActiveCardFace, getEnemy } from './data-access';
 import { continuePendingResolution } from './cells';
 import { drawActionCards } from './cards';
 import { applyDamageToHealth, recoverHealth } from './health';
@@ -80,7 +80,7 @@ export function resolveHasteAttack(state: GameState, manaSpent: number): GameSta
   return nextState;
 }
 
-export function playActionCard(state: GameState, cardId: string, targetInstanceId: string): GameState {
+export function playActionCard(state: GameState, cardId: string, targetInstanceId: string | null): GameState {
   if (!state.activeCombat) {
     return addLog(state, 'Aucun combat actif.');
   }
@@ -109,13 +109,16 @@ export function playActionCard(state: GameState, cardId: string, targetInstanceI
     return addLog(state, 'Mana insuffisante pour jouer cette carte.');
   }
 
-  const target = state.activeCombat.enemies.find((enemy) => enemy.instanceId === targetInstanceId);
-  if (!target) {
-    return addLog(state, 'Cible invalide pour cette carte.');
-  }
+  const needsTarget = faceNeedsTarget(face);
+  const target = targetInstanceId ? state.activeCombat.enemies.find((enemy) => enemy.instanceId === targetInstanceId) : undefined;
 
-  if (!isValidCombatTarget(state.activeCombat, targetInstanceId)) {
-    return addLog(state, "Cet ennemi est Caché et ne peut pas être ciblé tant que d'autres ennemis sont présents.");
+  if (needsTarget) {
+    if (!target) {
+      return addLog(state, 'Cible invalide pour cette carte.');
+    }
+    if (!isValidCombatTarget(state.activeCombat, targetInstanceId!)) {
+      return addLog(state, "Cet ennemi est Caché et ne peut pas être ciblé tant que d'autres ennemis sont présents.");
+    }
   }
 
   let nextState: GameState = {
@@ -230,7 +233,7 @@ export function usePotion(state: GameState): GameState {
   );
 }
 
-function applyActionEffects(state: GameState, face: CardFaceData, targetInstanceId: string): GameState {
+function applyActionEffects(state: GameState, face: CardFaceData, targetInstanceId: string | null): GameState {
   let nextState = addLog(state, 'Carte jouee.');
   const damageHits: number[] = [];
 

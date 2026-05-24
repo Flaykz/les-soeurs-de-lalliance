@@ -34,7 +34,7 @@ export function EnemyCardDisplay({
   const displayCount = hasZeroEntry ? firstZeroIdx + 1 : (lastNonZero >= 0 ? lastNonZero + 1 : 1);
   const xpByRound = allRounds.slice(0, displayCount);
 
-  const traits = card?.traits ?? [];
+  const traits = (card?.traits ?? []).filter(t => !isUntargetable || t.toLowerCase() !== 'caché');
 
   const classNames = [
     'enemy-target-card',
@@ -61,7 +61,10 @@ export function EnemyCardDisplay({
         </span>
       </div>
 
-      <span className="enemy-card-art" aria-hidden="true">☠</span>
+      <div className="enemy-card-art" aria-hidden="true">
+        ☠
+        {isUntargetable && <span className="enemy-hidden-overlay">Caché</span>}
+      </div>
 
       <div className="enemy-xp-track" aria-label="Gains XP par round">
         {xpByRound.map((xp, i) => {
@@ -81,7 +84,6 @@ export function EnemyCardDisplay({
           ))}
         </div>
       )}
-      {isUntargetable && <span className="enemy-hidden-overlay">Caché</span>}
     </>
   );
 

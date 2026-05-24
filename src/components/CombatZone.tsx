@@ -27,7 +27,7 @@ export function CombatZone({ activeEnemies, canSelectEnemy, combatFeedback, comb
   const maxHasteBlock = Math.min(mana ?? 0, pendingHasteAttack ?? 0);
   return (
     <div className="combat-zone">
-      <div className="combat-arena">
+      <div className="combat-arena" style={{ '--n': activeEnemies.length } as CSSProperties}>
         <div className={`player-character-card${playerFeedback ? ' player-card-hit' : ''}`}>
           {playerFeedback && (
             <div className="player-hit-feedback" aria-live="assertive" key={`${playerFeedback.incomingDamage}-${playerFeedback.net}`}>
@@ -125,13 +125,7 @@ export function CombatZone({ activeEnemies, canSelectEnemy, combatFeedback, comb
         </div>
       </div>
 
-      <p className="muted">
-        {combatFeedback
-          ? 'Resolution en cours...'
-          : canSelectEnemy
-            ? "Selectionne un ennemi, puis clique une carte de ta main pour la jouer sur cette cible."
-            : "Lance d'abord le de de mana pour activer la selection et les cartes."}
-      </p>
+      {combatFeedback && <p className="muted">Resolution en cours...</p>}
     </div>
   );
 }

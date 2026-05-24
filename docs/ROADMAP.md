@@ -4,9 +4,9 @@ Ce document sert de plan de travail pour rendre la boite de base jouable numéri
 
 ## Priorite actuelle
 
-Atteindre une partie complete jouable de bout en bout avec les donnees reelles deja saisies. Le gros reste a faire n'est plus la saisie des donnees, mais l'application complete de ces donnees par le moteur de regles : valeurs `?`, mots-cles/traits, effets speciaux, puis combat boss.
+Atteindre une partie complete jouable de bout en bout avec les donnees reelles deja saisies. Le gros reste a faire n'est plus la saisie des donnees, mais l'application complete de ces donnees par le moteur de regles : effets speciaux de cartes non modelises, puis combat boss.
 
-Etat du code au 2026-05-24 : module `health.ts` extrait, systeme d'animation configurable avec overlays UI en place. Les valeurs `?` ennemies sont tirées aléatoirement depuis le début du combat (`rollDie()` dans `cells.ts`). La fonction morte `resolveTrapLevel` a été supprimée. Les mots-clés ennemis Caché, Hâte, Coriace, Rage et Force Brutale sont implémentés dans le moteur de combat et l'UI. Le combat boss reste une victoire prototype. Les mots-clés boss Gardiens et Brûlures ne sont pas encore implémentés (attente phase 6).
+Etat du code au 2026-05-24 : module `health.ts` extrait, systeme d'animation configurable avec overlays UI en place. Les valeurs `?` ennemies sont tirées aléatoirement au début du combat. La fonction morte `resolveTrapLevel` a été supprimée. Les cinq mots-clés ennemis (Caché, Hâte, Coriace, Rage, Force Brutale) sont implémentés dans le moteur et affichés dans l'UI. Le fichier `docs/RULES_FR.md` a été mis à jour avec les définitions officielles de tous les mots-clés (carte Keywords.pdf). Les mots-clés boss Gardiens et Brûlures ne sont pas encore implémentés (attente phase 6 — combat boss). Le combat boss reste une victoire prototype.
 
 ## Point de regles - officiel vs implementation actuelle
 
@@ -66,9 +66,9 @@ Priorite : P1. Cette couche doit etre stabilisee avant les donnees finales.
 
 Regles officielles ciblees : combat alterne phase joueur et phase ennemie, mana lancee une fois par round avec le de noir et non conservee, cartes jouees selon leurs couts et effets, defense/soins/effets temporaires appliques, recompenses exactes a la victoire.
 
-Implementation actuelle : ennemis tires aleatoirement, groupes de 3 maximum, mana lancee une fois par round, cible choisie manuellement, combat sequentiel avec phases explicites `roll-mana`, `player`, puis `enemy`, cartes action modelisees par effets cumulables (`damage`, `damage-top-deck`, `self-damage`, `defense`, `heal`, `draw`, `mana`, `reroll-mana`, `discard-random`), defense temporaire de round appliquee aux degats ennemis, ennemis attaquent en bloc pendant la phase ennemie, round de combat suivi, XP attribuee immediatement selon la piste de round de chaque ennemi vaincu, aucune repioche automatique, achat d'une carte action visible pour 1 mana pendant la phase joueuse, recyclage automatique de la defausse action quand le deck action est vide, et defausse volontaire de cartes de la main pour +1 mana par carte sans depasser 6 mana.
+Implementation actuelle : ennemis tires aleatoirement, groupes de 3 maximum, valeurs `?` tirees au lancer de combat, mana lancee une fois par round, cible choisie manuellement, combat sequentiel avec phases explicites `roll-mana`, `player`, `enemy` et `haste` (pour la Hâte au round 1), cartes action modelisees par effets cumulables (`damage`, `damage-top-deck`, `self-damage`, `defense`, `heal`, `draw`, `mana`, `reroll-mana`, `discard-random`), defense temporaire de round, round suivi, XP immediate par piste, sans repioche automatique, achat d'une carte visible pour 1 mana, recyclage automatique de la defausse, defausse volontaire pour +1 mana. Les cinq mots-cles ennemis sont implementes : **Caché** (ciblage bloque tant qu'un non-Caché est vivant), **Hâte** (attaque immediate apres mana round 1, mana reducible, absent de la phase ennemie du round 1), **Coriace** (resurection avec 1 PV +1 ATQ, XP a la 2e mort), **Rage** (ATQ doublee si defense = 0), **Force Brutale** (defausse aleatoire a chaque degat inflige).
 
-Reste a faire : tirer et appliquer les valeurs ennemies `?` au lieu de les convertir en fallbacks codes en dur (0 ATK dans `combat.ts` ligne 109, 1 PV dans `cells.ts` ligne 99), gerer les traits/mots-cles ennemis (`Caché`, `Coriace`, `Hâte`, etc.), implementer les effets speciaux non couverts par les effets numeriques actuels (relance de de ennemi, annulation de mot-cle, retrait d'un ennemi avec mot-cle), verifier les recompenses exactes et consolider les cas limites de pioche/defausse/main avec les cartes reelles.
+Reste a faire : implementer les effets speciaux de cartes encore representes seulement dans le texte (relance de de ennemi, annulation de mot-cle, retrait d'un ennemi avec mot-cle), verifier les recompenses exactes et consolider les cas limites de pioche/defausse/main. Les mots-cles boss (Gardiens, Brulures) attendent la phase 6.
 
 Priorite : P0. Sans combat fiable, la partie complete et le boss ne peuvent pas etre valides.
 
@@ -305,13 +305,14 @@ Validation : une partie peut etre interrompue/reprise sans erreur, meme apres ev
 
 ## Ordre recommande des prochains travaux
 
-1. Supprimer `resolveTrapLevel` (code mort dans `cells.ts`) — nettoyage sans risque.
-2. Stabiliser la phase 3 avec les vraies donnees : valeurs ennemies `?` (remplacer les fallbacks 0 ATK / 1 PV par de vrais lancers), traits/mots-cles ennemis, effets speciaux A/AA, recompenses et cas limites de fin de combat.
-3. Stabiliser la phase 2 : cas limites deck/defausse/main, journal de resolution et lisibilite des tresors/pieges avances dans l'UI.
-4. Remplacer la victoire boss prototype par un vrai combat boss avec jauge, `?`, `x2`, attaque et mot-cle boss.
-5. Valider en playtest les cas sans mouvement exact, les plafonds de recuperation PV et les fenetres legales des depenses XP.
-6. Nettoyer les noms/textes incertains et ajouter les notes de doute restantes dans les donnees.
-7. Versionner `GameState` et ajouter reset/migrations propres (phase 7).
+1. ~~Supprimer `resolveTrapLevel` (code mort dans `cells.ts`)~~ — **fait**.
+2. ~~Valeurs ennemies `?` et mots-cles ennemis~~ — **fait** (Caché, Hâte, Coriace, Rage, Force Brutale implementes ; `docs/RULES_FR.md` mis a jour avec tous les mots-cles officiels).
+3. Implementer les effets speciaux de cartes encore en texte libre : relance de de ennemi, annulation de mot-cle, retrait d'un ennemi avec mot-cle. Verifier les recompenses exactes et les cas limites pioche/defausse/main en playtest.
+4. Stabiliser la phase 2 : journal de resolution plus clair, distinction tresor normal/avance dans l'UI, cas limites deck/defausse vides pendant les tresors.
+5. Remplacer la victoire boss prototype par un vrai combat boss : jauge de des, `?`, `x2`, attaque, mots-cles Gardiens et Brulures.
+6. Valider en playtest les cas sans mouvement exact, les plafonds de recuperation PV et les fenetres legales des depenses XP.
+7. Nettoyer les noms/textes incertains et ajouter les notes de doute restantes dans les donnees.
+8. Versionner `GameState` et ajouter reset/migrations propres (phase 7).
 
 ## Definition du MVP jouable
 

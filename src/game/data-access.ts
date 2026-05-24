@@ -26,6 +26,14 @@ export function flipCard(state: GameState, cardId: string): GameState {
   return { ...state, flippedCards: [...state.flippedCards, cardId] };
 }
 
+export function faceNeedsTarget(face: CardFaceData): boolean {
+  return face.effects.some((e) => e.kind === 'damage' || e.kind === 'damage-top-deck');
+}
+
+export function cardNeedsTarget(card: ActionCard, flippedCards: string[]): boolean {
+  return faceNeedsTarget(getActiveCardFace(card, flippedCards));
+}
+
 export function resolveCardForDisplay(card: ActionCard, flippedCards: string[]): ActionCard {
   if (!card.level2 || !flippedCards.includes(card.id)) return card;
   return {

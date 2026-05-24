@@ -7,11 +7,12 @@ interface Props {
   onClose: () => void;
   onBuyActionCard: () => void;
   onBuyAdvancedActionCard: (deckIndex: 0 | 1) => void;
+  onBuyPotion: () => void;
   buyActionDisabledReason: string | null;
   onInspect?: (card: ActionCard) => void;
 }
 
-export function DecksOverlay({ game, onClose, onBuyActionCard, onBuyAdvancedActionCard, buyActionDisabledReason, onInspect }: Props) {
+export function DecksOverlay({ game, onClose, onBuyActionCard, onBuyAdvancedActionCard, onBuyPotion, buyActionDisabledReason, onInspect }: Props) {
   const topActionCard = game.deck[0] ? getAction(game.deck[0]) ?? null : null;
   const topAdvancedCards = game.advancedDecks.map((deck) => deck[0] ? getAction(deck[0]) ?? null : null);
 
@@ -58,6 +59,14 @@ export function DecksOverlay({ game, onClose, onBuyActionCard, onBuyAdvancedActi
             <h2>{game.discard.length} carte(s)</h2>
             <DiscardList discard={game.discard} onInspect={onInspect} />
           </div>
+        </div>
+        <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <button
+            disabled={game.xp < 3 || game.potions >= 3}
+            onClick={() => { onBuyPotion(); onClose(); }}
+          >
+            ✚ Acheter une potion · 3 XP
+          </button>
         </div>
       </div>
     </section>

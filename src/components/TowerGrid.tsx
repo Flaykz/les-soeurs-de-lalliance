@@ -14,13 +14,17 @@ export function TowerGrid({ game, isActiveTower, movementOptions, selectedPath, 
   const isAnimating = animatedPosition !== undefined;
 
   return (
-    <div className="tower-grid" style={{ gridTemplateColumns: `repeat(${tower.columns}, minmax(0, 1fr))` }}>
+    <div className="tower-grid" style={{ '--tower-cols': tower.columns } as React.CSSProperties}>
       {tower.cells.map((cell) => {
         const isDestination = isActiveTower && movementOptions.some((option) => option.id === cell.id);
         const isPreviewedPath = isActiveTower && (selectedPath?.cellIds.includes(cell.id) ?? false);
         const effectivePosId = isAnimating ? animatedPosition : game.position;
         const isCurrent = isActiveTower && cell.id === effectivePosId;
         const isResolved = game.resolvedCells.includes(cell.id);
+
+        const isEntrance = cell.id === tower.startingCellId;
+        const iconClass = isEntrance ? 'entrance' : cell.kind;
+        const iconLabel = isEntrance ? 'Entrée' : getCellLabel(cell.kind);
 
         return (
           <button
@@ -36,8 +40,8 @@ export function TowerGrid({ game, isActiveTower, movementOptions, selectedPath, 
             }}
             type="button"
           >
-            <span className={`cell-icon ${cell.kind}`} aria-label={getCellLabel(cell.kind)} title={`${cell.label} (${cell.row + 1}.${cell.col + 1})`}>
-              <CellIcon kind={cell.kind} enemyCount={cell.enemyCount} />
+            <span className={`cell-icon ${iconClass}`} aria-label={iconLabel} title={`${cell.label} (${cell.row + 1}.${cell.col + 1})`}>
+              <CellIcon kind={cell.kind} enemyCount={cell.enemyCount} isEntrance={isEntrance} />
             </span>
           </button>
         );
@@ -46,7 +50,27 @@ export function TowerGrid({ game, isActiveTower, movementOptions, selectedPath, 
   );
 }
 
-export function CellIcon({ kind, enemyCount }: { kind: string; enemyCount?: number }) {
+export function CellIcon({ kind, enemyCount, isEntrance }: { kind: string; enemyCount?: number; isEntrance?: boolean }) {
+  // Porte en bois (entrée de tour)
+  if (isEntrance) {
+    return (
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        {/* Corps de la porte avec arche */}
+        <path d="M12 57 L12 27 Q12 7 32 7 Q52 7 52 27 L52 57 Z" fill="currentColor" />
+        {/* Planches horizontales */}
+        <line x1="13" y1="36" x2="51" y2="36" stroke="#171717" strokeWidth="2.5" opacity="0.35" />
+        <line x1="13" y1="47" x2="51" y2="47" stroke="#171717" strokeWidth="2.5" opacity="0.35" />
+        {/* Penture gauche haut */}
+        <rect x="12" y="24" width="11" height="4" rx="1.5" fill="#171717" opacity="0.52" />
+        {/* Penture gauche bas */}
+        <rect x="12" y="42" width="11" height="4" rx="1.5" fill="#171717" opacity="0.52" />
+        {/* Anneau de porte */}
+        <circle cx="39" cy="41" r="4.5" fill="none" stroke="#171717" strokeWidth="3" opacity="0.52" />
+        <circle cx="39" cy="41" r="1.8" fill="#171717" opacity="0.52" />
+      </svg>
+    );
+  }
+
   // Bouclier avec épées croisées (comme sur la carte physique)
   if (kind === 'enemy') {
     return (

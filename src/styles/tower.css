@@ -1,3 +1,74 @@
+.path-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid #3f3f46;
+  border-radius: 14px;
+}
+
+.path-nav {
+  width: 48px;
+  height: 48px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #52525b;
+  background: rgba(255, 255, 255, 0.06);
+  color: #e4e4e7;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.path-counter {
+  min-width: 48px;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #a1a1aa;
+}
+
+.path-confirm {
+  width: 52px;
+  height: 48px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #facc15;
+  background: rgba(250, 204, 21, 0.15);
+  color: #facc15;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.path-confirm:hover {
+  background: rgba(250, 204, 21, 0.25);
+}
+
+.path-reroll {
+  height: 48px;
+  padding: 0 14px;
+  font-size: 0.85rem;
+  border-radius: 10px;
+  border: 1px solid #52525b;
+  background: transparent;
+  color: #a1a1aa;
+  cursor: pointer;
+}
+
+.tower-footer-info {
+  margin-top: 10px;
+  text-align: center;
+  opacity: 0.7;
+}
+
 .tower-stack {
   display: grid;
   gap: 18px;
@@ -40,6 +111,7 @@
 .tower-grid {
   display: grid;
   gap: clamp(4px, 0.7vw, 8px);
+  grid-template-columns: repeat(var(--tower-cols, 5), minmax(0, 1fr));
 }
 
 .tower-cell {
@@ -95,6 +167,10 @@
   overflow: visible;
 }
 
+.cell-icon.entrance {
+  color: #92400e;
+}
+
 .cell-icon.enemy {
   color: #fca5a5;
 }
@@ -116,8 +192,9 @@
 }
 
 .tower-cell.current {
-  border-color: #facc15;
-  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.22);
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.10);
 }
 
 .tower-cell.destination {
@@ -136,8 +213,8 @@
 }
 
 .tower-cell.pawn-moving {
-  border-color: #facc15;
-  background: rgba(250, 204, 21, 0.28);
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.18);
   animation: pawnStep var(--move-step-ms, 280ms) ease both;
 }
 
@@ -149,7 +226,7 @@
 }
 
 @keyframes pawnStep {
-  0%   { background: rgba(250, 204, 21, 0.6); transform: scale(1.12); box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.45); }
+  0%   { background: rgba(255, 255, 255, 0.45); transform: scale(1.12); box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.35); }
   65%  { transform: scale(1.03); }
-  100% { background: rgba(250, 204, 21, 0.28); transform: scale(1); }
+  100% { background: rgba(255, 255, 255, 0.18); transform: scale(1); }
 }
