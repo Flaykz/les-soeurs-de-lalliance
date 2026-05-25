@@ -11,7 +11,7 @@ export function rollBossMana(state: GameState): GameState {
   }
   const mana = rollDie();
   return addLog(
-    { ...state, mana, activeBossCombat: { ...state.activeBossCombat, phase: 'player' } },
+    { ...state, mana, manaJustRolled: true, activeBossCombat: { ...state.activeBossCombat, phase: 'player' } },
     `Mana disponible : ${mana}. Phase joueuse.`
   );
 }
@@ -34,6 +34,7 @@ export function playBossActionCard(state: GameState, cardId: string, targetDieIn
   let nextState: GameState = {
     ...state,
     mana: mana - face.manaCost,
+    manaJustRolled: false,
     hand: state.hand.filter((_, i) => i !== handIndex),
     discard: [...state.discard, cardId],
     banishableCardId: cardId,

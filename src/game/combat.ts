@@ -37,7 +37,7 @@ export function rollMana(state: GameState): GameState {
   }
 
   const mana = rollDie();
-  let nextState: GameState = { ...state, mana, activeCombat: { ...state.activeCombat, phase: 'player' } };
+  let nextState: GameState = { ...state, mana, manaJustRolled: true, activeCombat: { ...state.activeCombat, phase: 'player' } };
 
   if (state.activeCombat.round === 1) {
     const hasteEnemies = state.activeCombat.enemies.filter((e) => e.enemyHealth > 0 && hasTrait(e.enemyId, 'hâte'));
@@ -124,6 +124,7 @@ export function playActionCard(state: GameState, cardId: string, targetInstanceI
   let nextState: GameState = {
     ...state,
     mana: mana - face.manaCost,
+    manaJustRolled: false,
     hand: state.hand.filter((_, index) => index !== handIndex),
     discard: [...state.discard, cardId],
     banishableCardId: cardId
@@ -226,6 +227,7 @@ export function usePotion(state: GameState): GameState {
   return addLog(
     {
       ...state,
+      manaJustRolled: false,
       potions: state.potions - 1,
       health: recoverHealth(state.health, state.healthLimit, 4)
     },

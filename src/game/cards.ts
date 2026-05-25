@@ -26,7 +26,7 @@ export function upgradeCard(state: GameState, cardId: string): GameState {
   const card = getAction(cardId);
   if (!card) return state;
   return addLog(
-    flipCard({ ...state, xp: state.xp - UPGRADE_XP_COST }, cardId),
+    flipCard({ ...state, xp: state.xp - UPGRADE_XP_COST, manaJustRolled: false }, cardId),
     `Carte amelioree (face 2). -${UPGRADE_XP_COST} XP.`
   );
 }
@@ -139,7 +139,7 @@ export function buyTopActionCard(state: GameState): GameState {
     return addLog(state, 'Deck action et defausse vides : impossible d acheter une carte action.');
   }
 
-  return drawOneActionCard({ ...state, mana: state.mana - 1 }, 'Achat action', 'achetee pour 1 mana et ajoutee a la main');
+  return drawOneActionCard({ ...state, mana: state.mana - 1, manaJustRolled: false }, 'Achat action', 'achetee pour 1 mana et ajoutee a la main');
 }
 
 export function buyAdvancedActionCard(state: GameState, deckIndex: 0 | 1): GameState {
@@ -197,7 +197,7 @@ export function rerollManaWithXp(state: GameState): GameState {
 
   if (state.xp < REROLL_XP_COST) return addLog(state, 'XP insuffisante pour relancer la mana.');
   const mana = rollDie();
-  return addLog({ ...state, xp: state.xp - REROLL_XP_COST, mana }, `Mana relancee : ${mana}. -${REROLL_XP_COST} XP.`);
+  return addLog({ ...state, xp: state.xp - REROLL_XP_COST, mana, manaJustRolled: false }, `Mana relancee : ${mana}. -${REROLL_XP_COST} XP.`);
 }
 
 export function rerollMovementDiceWithXp(state: GameState): GameState {
@@ -251,7 +251,7 @@ export function banishPlayedCardWithXp(state: GameState): GameState {
   });
 
   return addLog(
-    { ...state, xp: state.xp - BANISH_XP_COST, discard, banishableCardId: null },
+    { ...state, xp: state.xp - BANISH_XP_COST, manaJustRolled: false, discard, banishableCardId: null },
     `${banishedCard?.text ?? 'Carte jouee'} bannie. -${BANISH_XP_COST} XP.`
   );
 }
@@ -265,9 +265,8 @@ export function discardHandCardForMana(state: GameState, handIndex: number): Gam
     return state;
   }
 
-  const phase = state.activeCombat?.phase ?? state.activeBossCombat?.phase;
-  if (phase !== 'player' || state.mana === null) {
-    return addLog(state, 'Défausse pour mana possible seulement pendant la phase joueuse, après le lancer de mana.');
+  if (!state.manaJustRolled || state.mana === null) {
+    return addLog(state, 'Défausse pour mana possible seulement au début du round, juste après le lancer de mana.');
   }
 
   if (state.mana >= 6) {
@@ -284,9 +283,38 @@ export function discardHandCardForMana(state: GameState, handIndex: number): Gam
     {
       ...state,
       mana: Math.min(6, state.mana + 1),
+      manaJustRolled: false,
       hand: state.hand.filter((_, index) => index !== handIndex),
       discard: [...state.discard, cardId]
     },
     'Carte defaussee : +1 mana pour ce round.'
+  );
+}
+
+export function cycleAdvancedDeckCard(state: GameState, deckIndex: 0 | 1): GameState {
+  const inCombatPlayerPhase =
+    (state.activeCombat?.phase === 'player' && !state.combatFeedback)
+    || (state.activeBossCombat?.phase === 'player' && !state.bossCombatFeedback);
+
+  if (!inCombatPlayerPhase || state.mana === null) {
+    return addLog(state, 'Action impossible dans cette situation.');
+  }
+
+  if (state.mana < 1) {
+    return addLog(state, 'Mana insuffisante pour passer la carte du deck AA.');
+  }
+
+  const deck = state.advancedDecks[deckIndex];
+  if (deck.length === 0) {
+    return addLog(state, 'Deck AA vide.');
+  }
+
+  const [top, ...rest] = deck;
+  const advancedDecks: [string[], string[]] = [...state.advancedDecks] as [string[], string[]];
+  advancedDecks[deckIndex] = [...rest, top];
+
+  return addLog(
+    { ...state, mana: state.mana - 1, manaJustRolled: false, advancedDecks },
+    `Carte du deck AA ${deckIndex + 1} passée sous le deck. -1◆`
   );
 }

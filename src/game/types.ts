@@ -220,5 +220,6 @@ export type GameState = {
   flippedCards: string[];
   banishableCardId: string | null;
   pendingHasteAttack: number | null;
+  manaJustRolled: boolean;
   log: string[];
 };

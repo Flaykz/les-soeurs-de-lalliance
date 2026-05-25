@@ -18,6 +18,7 @@ import {
   buyAdvancedActionCard,
   buyPotionWithXp,
   buyTopActionCard,
+  cycleAdvancedDeckCard,
   canBanishPlayedCard,
   chooseMovementDestination,
   isCombatTargetUntargetable,
@@ -75,6 +76,12 @@ import {
   loadSavedGame
 } from './ui/appHelpers';
 
+function scrollToBottom(el: HTMLElement) {
+  requestAnimationFrame(() => {
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  });
+}
+
 const ANIMATION_SPEED_KEY = 'lsa-animation-speed';
 
 export function App() {
@@ -99,7 +106,7 @@ export function App() {
   const prevTrapFeedbackRef = useRef<GameState['trapFeedback']>(game?.trapFeedback ?? null);
   const prevPendingTrapLevelDiscardRef = useRef<GameState['pendingTrapLevelDiscard']>(game?.pendingTrapLevelDiscard ?? null);
   const shellRef = useRef<HTMLElement>(null);
-  const hasScrolledToBottomRef = useRef(false);
+  const prevPhaseKeyRef = useRef('');
   const [animationSpeed, setAnimationSpeed] = useState<AnimationSpeed>(() => {
     const savedSpeed = localStorage.getItem(ANIMATION_SPEED_KEY);
     return isAnimationSpeed(savedSpeed) ? savedSpeed : defaultAnimationSpeed;
@@ -118,11 +125,16 @@ export function App() {
     setGame(refillActionDeckIfEmpty(game));
   }, [game]);
 
-  useLayoutEffect(() => {
-    if (!game || hasScrolledToBottomRef.current || !shellRef.current) return;
-    hasScrolledToBottomRef.current = true;
+  useEffect(() => {
     const el = shellRef.current;
-    el.scrollTop = el.scrollHeight;
+    if (!game || !el) return;
+    const combatPhase = game.activeCombat?.phase ?? game.activeBossCombat?.phase ?? '';
+    const key = `${game.phase}|${combatPhase}`;
+    if (key === prevPhaseKeyRef.current) return;
+    prevPhaseKeyRef.current = key;
+    if (game.phase === 'movement-roll' || combatPhase === 'roll-mana') {
+      scrollToBottom(el);
+    }
   }, [game]);
 
   useEffect(() => {
@@ -185,9 +197,6 @@ export function App() {
     }
     if (prev && !current) {
       setTrapDiscardAnimCardId(null);
-      if (shellRef.current) {
-        shellRef.current.scrollTo({ top: shellRef.current.scrollHeight, behavior: 'smooth' });
-      }
     }
   }, [game?.trapFeedback]);
 
@@ -196,7 +205,7 @@ export function App() {
     const prev = prevShowTrapIntroRef.current;
     prevShowTrapIntroRef.current = showTrapIntro;
     if (prev && !showTrapIntro && shellRef.current) {
-      shellRef.current.scrollTo({ top: shellRef.current.scrollHeight, behavior: 'smooth' });
+      scrollToBottom(shellRef.current);
     }
   }, [showTrapIntro]);
 
@@ -205,7 +214,7 @@ export function App() {
     const prev = prevShowTrapLevelIntroRef.current;
     prevShowTrapLevelIntroRef.current = showTrapLevelIntro;
     if (prev && !showTrapLevelIntro && shellRef.current) {
-      shellRef.current.scrollTo({ top: shellRef.current.scrollHeight, behavior: 'smooth' });
+      scrollToBottom(shellRef.current);
     }
   }, [showTrapLevelIntro]);
 
@@ -458,6 +467,12 @@ export function App() {
     setGame(buyAdvancedActionCard(game, deckIndex));
   }
 
+  function cycleAdvancedCard(deckIndex: 0 | 1) {
+    if (!game) return;
+    setCombatMessage(null);
+    setGame(cycleAdvancedDeckCard(game, deckIndex));
+  }
+
   function buyPotion() {
     if (!game) return;
     setCombatMessage(null);
@@ -572,6 +587,16 @@ export function App() {
                           2 XP
                         </button>
                       )}
+                      {card && canActInBossCombat && (
+                        <button
+                          className="deck-cycle-overlay-btn"
+                          disabled={(game.mana ?? 0) < 1 || Boolean(game.bossCombatFeedback)}
+                          onClick={() => cycleAdvancedCard(index as 0 | 1)}
+                          title="Passer la carte du dessus sous le deck"
+                        >
+                          Passer · 1◆
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -630,6 +655,16 @@ export function App() {
                             onClick={() => buyAdvancedCard(index as 0 | 1)}
                           >
                             2 XP
+                          </button>
+                        )}
+                        {card && canActInCombat && (
+                          <button
+                            className="deck-cycle-overlay-btn"
+                            disabled={(game.mana ?? 0) < 1 || Boolean(game.combatFeedback)}
+                            onClick={() => cycleAdvancedCard(index as 0 | 1)}
+                            title="Passer la carte du dessus sous le deck"
+                          >
+                            Passer · 1◆
                           </button>
                         )}
                       </div>

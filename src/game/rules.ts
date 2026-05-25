@@ -55,6 +55,7 @@ export function createInitialGameState(bossId: string): GameState {
     flippedCards: [],
     banishableCardId: null,
     pendingHasteAttack: null,
+    manaJustRolled: false,
     log: [`Boss choisi : ${boss.name}. Deck action melange, main de depart piochee. ${tower.name} commence.`]
   });
 }
