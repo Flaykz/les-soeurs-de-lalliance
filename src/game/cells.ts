@@ -2,6 +2,7 @@ import { baseEnemies } from '../data/baseSet';
 import type { GameState, PendingCombatGroup, TowerCell } from './types';
 import { getAction, getBoss, getCell, getEnemy, getTower } from './data-access';
 import { resolveCardForDisplay } from './data-access';
+import { deriveFaceCompact } from '../ui/formatters';
 import { initBossCombat } from './boss-combat';
 import { applyDamageToHealth } from './health';
 import { addLog, rollDie, shuffle } from './utils';
@@ -347,7 +348,7 @@ export function discardCardForTrapBonus(state: GameState, handIndex: number): Ga
         discardedForBonus: [...pending.discardedForBonus, cardId]
       }
     },
-    `Défausse de ${card.text} (coût ${manaCost} mana) pour le jet de protection. Bonus actuel : +${pending.manaBonus + manaCost}.`
+    `Défausse de [${deriveFaceCompact(card.effects, card.requiresLocations)}] (coût ${manaCost} mana) pour le jet de protection. Bonus actuel : +${pending.manaBonus + manaCost}.`
   );
 }
 
@@ -371,7 +372,7 @@ export function undoTrapDiscard(state: GameState): GameState {
         discardedForBonus: pending.discardedForBonus.slice(0, -1),
       }
     },
-    `Annulation : ${card?.text ?? cardId} remise en main. Bonus : +${pending.manaBonus - manaCost}.`
+    `Annulation : [${card ? deriveFaceCompact(card.effects, card.requiresLocations) : cardId}] remise en main. Bonus : +${pending.manaBonus - manaCost}.`
   );
 }
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { getAction } from '../game/rules';
 import { resolveCardForDisplay } from '../game/data-access';
 import type { ActionCard, TowerDefinition } from '../game/types';
-import { formatActionEffects, formatValue, getCardMeta, getEffectDisplays, type CardSummary } from '../ui/formatters';
+import { deriveFaceLines, formatActionEffects, formatValue, getCardMeta, getEffectDisplays, type CardSummary } from '../ui/formatters';
 import { StaticTowerPreview } from './BossCard';
 
 export function CardList({ title, eyebrow, items }: { title: string; eyebrow?: string; items: CardSummary[] }) {
@@ -15,7 +15,15 @@ export function CardList({ title, eyebrow, items }: { title: string; eyebrow?: s
           <article className="card" key={item.id}>
             <p className="card-type">{getCardMeta(item)}</p>
             {'name' in item && item.name && <h3>{item.name}</h3>}
-            <p>{item.text}</p>
+            {'effects' in item ? (
+              <ul className="card-effect-lines">
+                {deriveFaceLines(item.effects, item.requiresLocations).map((line, i) => (
+                  <li key={i}>{line}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>{item.text}</p>
+            )}
           </article>
         ))}
       </div>

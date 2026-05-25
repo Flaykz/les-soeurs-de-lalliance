@@ -6,6 +6,54 @@ export function formatValue(value: number | string | null) {
   return value ?? '?';
 }
 
+function effectToSentence(effect: ActionEffect): string {
+  switch (effect.kind) {
+    case 'damage':
+      return `Infligez ${effect.value} dégât${effect.value > 1 ? 's' : ''}.`;
+    case 'damage-top-deck':
+      return effect.bonus
+        ? `Infligez X+${effect.bonus} dégâts (X = coût Mana du dessus du deck Action).`
+        : `Infligez X dégâts (X = coût Mana du dessus du deck Action).`;
+    case 'defense':
+      return `Gagnez ${effect.value} Défense${effect.value > 1 ? 's' : ''}.`;
+    case 'heal':
+      return `Récupérez ${effect.value} PV.`;
+    case 'draw':
+      return `Piochez ${effect.value} carte${effect.value > 1 ? 's' : ''}.`;
+    case 'mana':
+      return `Gagnez ${effect.value} Mana.`;
+    case 'reroll-mana':
+      return effect.bonus
+        ? `Relancez le dé de Mana (+${effect.bonus} au résultat, max 6). Condition : début du round.`
+        : `Relancez le dé de Mana. Condition : début du round.`;
+    case 'self-damage':
+      return `Subissez ${effect.value} dégât${effect.value > 1 ? 's' : ''}.`;
+    case 'discard-random':
+      return `Défaussez une carte au hasard de votre main.`;
+    case 'reroll-enemy-die':
+      return effect.maxRerolls === 1
+        ? `Relancez 1 fois un dé Résistance ou Attaque d'un ennemi.`
+        : `Relancez jusqu'à ${effect.maxRerolls} fois un dé Résistance ou Attaque d'un ennemi.`;
+    case 'cancel-enemy-keyword':
+      return `Annulez un mot-clé d'un ennemi en jeu.`;
+    case 'remove-from-combat':
+      return `Retirez du combat un ennemi (avec mot-clé) et défaussez-le.`;
+    case 'self-damage-x':
+      return `Choisissez X (0–${effect.max}). Subissez X dégâts. Infligez X dégâts. Piochez 1 carte.`;
+  }
+}
+
+export function deriveFaceLines(effects: ActionEffect[], requiresLocations?: boolean): string[] {
+  const lines: string[] = [];
+  if (requiresLocations) lines.push('Changez de lieu. Condition : début du combat.');
+  for (const effect of effects) lines.push(effectToSentence(effect));
+  return lines;
+}
+
+export function deriveFaceCompact(effects: ActionEffect[], requiresLocations?: boolean): string {
+  return deriveFaceLines(effects, requiresLocations).join(' ');
+}
+
 export function formatActionEffects(card: ActionCard) {
   return card.effects.map((effect) => {
     if (effect.kind === 'damage') return `${effect.value} degats`;
@@ -17,6 +65,9 @@ export function formatActionEffects(card: ActionCard) {
     if (effect.kind === 'self-damage') return `-${effect.value} PV (soi)`;
     if (effect.kind === 'discard-random') return 'defausse 1 carte au hasard';
     if (effect.kind === 'self-damage-x') return `subis X / inflige X / pioche 1 (X 0–${effect.max})`;
+    if (effect.kind === 'reroll-enemy-die') return `relance dé ennemi (max ${effect.maxRerolls})`;
+    if (effect.kind === 'cancel-enemy-keyword') return 'annule mot-clé ennemi';
+    if (effect.kind === 'remove-from-combat') return 'retire du combat';
     return `+${effect.value} mana`;
   }).join(', ');
 }
@@ -25,7 +76,7 @@ export function formatActionEffectIcons(card: ActionCard) {
   return card.effects.map((effect) => effectLabel(effect)).join(' ');
 }
 
-export function getEffectDisplays(card: ActionCard): { label: string; kind: string }[] {
+export function getEffectDisplays(card: { effects: ActionEffect[] }): { label: string; kind: string }[] {
   return card.effects.map((effect) => ({ label: effectLabel(effect), kind: effect.kind }));
 }
 
@@ -39,6 +90,9 @@ function effectLabel(effect: ActionEffect): string {
   if (effect.kind === 'self-damage') return `-♥ ${effect.value}`;
   if (effect.kind === 'discard-random') return '↓ ?';
   if (effect.kind === 'self-damage-x') return `⇄ X`;
+  if (effect.kind === 'reroll-enemy-die') return `↺ ennemi`;
+  if (effect.kind === 'cancel-enemy-keyword') return `✗ mot-clé`;
+  if (effect.kind === 'remove-from-combat') return `⊗ combat`;
   return `◆ ${effect.value}`;
 }
 

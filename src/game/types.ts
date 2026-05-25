@@ -25,11 +25,12 @@ export type ActionEffect =
 export type CardFaceData = {
   manaCost: number | null;
   effects: ActionEffect[];
-  text: string;
+  text?: string;
   traits?: string[];
 };
 
-export type ActionCard = Omit<BaseCard, 'name'> & {
+export type ActionCard = Omit<BaseCard, 'name' | 'text'> & {
+  text?: string;
   kind: 'action' | 'advanced-action';
   manaCost: number | null;
   effects: ActionEffect[];

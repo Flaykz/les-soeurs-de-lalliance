@@ -2,7 +2,6 @@ import type { ActionCard } from '../game/types';
 
 // Coûts Mana et effets principaux issus du PDF (Chapitre 1, pages 1-2).
 // Noms des cartes : illisibles sur le scan — à remplacer depuis les cartes physiques.
-// Effets marqués null ou avec notes?: 'TODO' = valeur non confirmée.
 
 export const baseActions: ActionCard[] = [
 
@@ -12,11 +11,9 @@ export const baseActions: ActionCard[] = [
     kind: 'action',
     manaCost: 1,
     effects: [{"kind":"damage","value":1}],
-    text: "Infligez 1 dégât.",
     level2: {
       manaCost: 1,
       effects: [{"kind":"damage","value":2}],
-      text: "Infligez 2 dégâts.",
     },
   },
   {
@@ -24,11 +21,9 @@ export const baseActions: ActionCard[] = [
     kind: 'action',
     manaCost: 2,
     effects: [{"kind":"damage","value":2}],
-    text: "Infligez 2 dégâts.",
     level2: {
       manaCost: 1,
       effects: [{"kind":"damage","value":2}],
-      text: "Infligez 2 dégâts.",
     },
   },
   {
@@ -36,11 +31,9 @@ export const baseActions: ActionCard[] = [
     kind: 'action',
     manaCost: 2,
     effects: [{"kind":"damage","value":2}],
-    text: "Infligez 2 dégâts.",
     level2: {
       manaCost: 3,
       effects: [{"kind":"damage","value":4}],
-      text: "Infligez 4 dégâts.",
     },
   },
   {
@@ -48,11 +41,9 @@ export const baseActions: ActionCard[] = [
     kind: 'action',
     manaCost: 2,
     effects: [{"kind":"damage","value":2}],
-    text: "Infligez 2 dégâts.",
     level2: {
       manaCost: 2,
       effects: [{"kind":"damage","value":3}],
-      text: "Infligez 3 dégâts.",
     },
   },
   {
@@ -60,11 +51,9 @@ export const baseActions: ActionCard[] = [
     kind: 'action',
     manaCost: 2,
     effects: [{"kind":"damage","value":2},{"kind":"draw","value":1}],
-    text: "Infligez 2 dégâts. Piochez 1 carte.",
     level2: {
       manaCost: 2,
       effects: [{"kind":"damage","value":3},{"kind":"draw","value":1}],
-      text: "Infligez 3 dégâts. Piochez 1 carte.",
     },
   },
   {
@@ -72,11 +61,9 @@ export const baseActions: ActionCard[] = [
     kind: 'action',
     manaCost: 1,
     effects: [{"kind":"damage-top-deck"}],
-    text: "Infligez X dégâts. X = le coût en Mana de la prochaine carte du deck Action.",
     level2: {
       manaCost: 1,
       effects: [{"kind":"damage-top-deck","bonus":2}],
-      text: "Infligez X+2 dégâts. X = le coût en Mana de la prochaine carte du deck Action.",
     },
   },
   {
@@ -84,11 +71,9 @@ export const baseActions: ActionCard[] = [
     kind: 'action',
     manaCost: 3,
     effects: [{"kind":"damage","value":2},{"kind":"defense","value":2}],
-    text: "Infligez 2 dégâts. Gagnez 2 Défenses.",
     level2: {
       manaCost: 3,
       effects: [{"kind":"damage","value":3},{"kind":"defense","value":3}],
-      text: "Infligez 3 dégâts. Gagnez 3 Défenses.",
     },
   },
   {
@@ -96,11 +81,9 @@ export const baseActions: ActionCard[] = [
     kind: 'action',
     manaCost: 3,
     effects: [{"kind":"damage","value":2},{"kind":"damage","value":2}],
-    text: "Infligez 2x2 dégâts.",
     level2: {
       manaCost: 2,
-      effects: [{"kind":"damage","value":2}, {"kind":"damage","value":2}],
-      text: "Infligez 2x2 dégâts.",
+      effects: [{"kind":"damage","value":2},{"kind":"damage","value":2}],
     },
   },
   {
@@ -108,11 +91,9 @@ export const baseActions: ActionCard[] = [
     kind: 'action',
     manaCost: 1,
     effects: [{"kind":"defense","value":2}],
-    text: "Gagnez 2 Défenses.",
     level2: {
       manaCost: 0,
       effects: [{"kind":"defense","value":2}],
-      text: "Gagnez 2 Défenses.",
     },
   },
   {
@@ -120,11 +101,9 @@ export const baseActions: ActionCard[] = [
     kind: 'action',
     manaCost: 1,
     effects: [{"kind":"defense","value":2}],
-    text: "Gagnez 2 Défenses.",
     level2: {
       manaCost: 1,
       effects: [{"kind":"defense","value":3}],
-      text: "Gagnez 3 Défenses.",
     },
   },
   {
@@ -132,11 +111,9 @@ export const baseActions: ActionCard[] = [
     kind: 'action',
     manaCost: 2,
     effects: [{"kind":"defense","value":3}],
-    text: "Gagnez 3 Défenses.",
     level2: {
       manaCost: 2,
       effects: [{"kind":"damage","value":2},{"kind":"defense","value":2}],
-      text: "Infliez 2 dégâts. Gagnez 2 Déenses.",
     },
   },
   {
@@ -144,11 +121,9 @@ export const baseActions: ActionCard[] = [
     kind: 'action',
     manaCost: 2,
     effects: [{"kind":"defense","value":5},{"kind":"discard-random"}],
-    text: "Gagnez 5 Défenses. Défaussez une carte au hasard de votre main.",
     level2: {
       manaCost: 2,
       effects: [{"kind":"defense","value":5}],
-      text: "Gagnez 5 Défenses.",
     },
   },
   {
@@ -156,12 +131,10 @@ export const baseActions: ActionCard[] = [
     kind: 'action',
     requiresLocations: true,
     manaCost: 2,
-    effects: [],
-    text: "Changez de lieu. Condition : à effectuer au début du combat.",
+    effects: [{"kind":"damage","value":2}],
     level2: {
       manaCost: 0,
       effects: [],
-      text: "Changez de lieu.",
     },
   },
   {
@@ -169,11 +142,9 @@ export const baseActions: ActionCard[] = [
     kind: 'action',
     manaCost: 0,
     effects: [{"kind":"self-damage","value":1},{"kind":"mana","value":3}],
-    text: "Subissez 1 dégât. Gagnez 3 Mana.",
     level2: {
       manaCost: 0,
       effects: [{"kind":"mana","value":2}],
-      text: "Gagnez 2 Mana.",
     },
   },
   {
@@ -181,11 +152,9 @@ export const baseActions: ActionCard[] = [
     kind: 'action',
     manaCost: 0,
     effects: [{"kind":"reroll-mana"}],
-    text: "Relancez le dé de Mana. Condition : à effectuer au début du tour.",
     level2: {
       manaCost: 0,
       effects: [{"kind":"reroll-mana","bonus":2}],
-      text: "Relancez le dé de Mana et ajoutez 2 au résultat (max 6). Condition : à effectuer au début du tour.",
     },
   },
   {
@@ -193,11 +162,9 @@ export const baseActions: ActionCard[] = [
     kind: 'action',
     manaCost: 0,
     effects: [{"kind":"self-damage","value":1},{"kind":"damage","value":2}],
-    text: "Subissez 1 dégât. Infligez 2 dégâts.",
     level2: {
       manaCost: 0,
       effects: [{"kind":"self-damage-x","max":3}],
-      text: "Subissez X dégâts (max 3). Infligez X dégâts. Piochez 1 carte.",
     },
   },
 
@@ -207,11 +174,9 @@ export const baseActions: ActionCard[] = [
     kind: 'advanced-action',
     manaCost: 3,
     effects: [{"kind":"heal","value":3}],
-    text: "Gagnez 3 points de Santé.",
     level2: {
       manaCost: 1,
       effects: [{"kind":"heal","value":2}],
-      text: "Gagnez 2 points de Santé.",
     },
   },
   {
@@ -219,11 +184,9 @@ export const baseActions: ActionCard[] = [
     kind: 'advanced-action',
     manaCost: 1,
     effects: [{"kind":"defense","value":4}],
-    text: "Gagnez 4 Défenses.",
     level2: {
       manaCost: 1,
       effects: [{"kind":"defense","value":5}],
-      text: "Gagnez 5 Défenses",
     },
   },
   {
@@ -231,11 +194,9 @@ export const baseActions: ActionCard[] = [
     kind: 'advanced-action',
     manaCost: 2,
     effects: [{"kind":"damage","value":4}],
-    text: "Infligez 4 dégâts.",
     level2: {
       manaCost: 2,
       effects: [{"kind":"damage","value":5}],
-      text: "Infligez 5 dégâts",
     },
   },
   {
@@ -243,11 +204,9 @@ export const baseActions: ActionCard[] = [
     kind: 'advanced-action',
     manaCost: 2,
     effects: [{"kind":"damage","value":3},{"kind":"defense","value":3}],
-    text: "Infligez 3 dégâts. Gagnez 3 Défenses.",
     level2: {
       manaCost: 3,
       effects: [{"kind":"damage","value":4},{"kind":"defense","value":4}],
-      text: "Infligez 4 dégâts. Gagnez 4 Défenses.",
     },
   },
   {
@@ -255,11 +214,9 @@ export const baseActions: ActionCard[] = [
     kind: 'advanced-action',
     manaCost: 0,
     effects: [{"kind":"mana","value":2}],
-    text: "Gagnez 2 Mana.",
     level2: {
       manaCost: 0,
       effects: [{"kind":"mana","value":3}],
-      text: "Gagnez 3 Mana.",
     },
   },
   {
@@ -267,11 +224,9 @@ export const baseActions: ActionCard[] = [
     kind: 'advanced-action',
     manaCost: 0,
     effects: [{"kind":"reroll-enemy-die","maxRerolls":1}],
-    text: "Après un lancer, relancez 1 fois un dé Resistance ou Attaque d'un ennemi.",
     level2: {
       manaCost: 0,
       effects: [{"kind":"reroll-enemy-die","maxRerolls":2}],
-      text: "Après un lancer, relancez jusqu'à 2 fois un dé Resistance ou Attaque d'un ennemi.",
     },
   },
   {
@@ -279,11 +234,9 @@ export const baseActions: ActionCard[] = [
     kind: 'advanced-action',
     manaCost: 1,
     effects: [{"kind":"cancel-enemy-keyword"}],
-    text: "Annulez un mot-clé d'un ennemi en jeu.",
     level2: {
       manaCost: 2,
       effects: [{"kind":"remove-from-combat"}],
-      text: "Retirez du combat un ennemi ayant un mot-clé, puis défaussez-le.",
     },
   },
   {
@@ -291,11 +244,9 @@ export const baseActions: ActionCard[] = [
     kind: 'advanced-action',
     manaCost: 2,
     effects: [{"kind":"damage","value":2},{"kind":"defense","value":2},{"kind":"draw","value":1}],
-    text: "Infligez 2 dégâts. Gagnez 2 Défenses. Piochez 1 carte.",
     level2: {
       manaCost: 0,
       effects: [{"kind":"damage","value":2},{"kind":"defense","value":2},{"kind":"draw","value":1}],
-      text: "Infligez 2 dégâts. Gagnez 2 Défenses. Piochez une carte.",
     },
   },
 ];

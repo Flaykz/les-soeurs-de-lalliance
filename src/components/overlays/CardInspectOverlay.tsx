@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { resolveCardForDisplay } from '../../game/data-access';
 import type { ActionCard } from '../../game/types';
-import { formatValue, getEffectDisplays } from '../../ui/formatters';
+import { deriveFaceLines, formatValue, getEffectDisplays } from '../../ui/formatters';
 
 const UPGRADE_XP_COST = 1;
 
@@ -63,7 +63,11 @@ export function CardInspectOverlay({ card, flippedCards, xp, canUpgrade, onUpgra
               {showingLevel2 && !isFlipped ? 'Aperçu niv. 2' : 'Niv. 2'}
             </span>
           )}
-          <p className="card-inspect-text">{displayFace.text}</p>
+          <ul className="card-inspect-lines">
+            {deriveFaceLines(displayFace.effects, card.requiresLocations).map((line, i) => (
+              <li key={i}>{line}</li>
+            ))}
+          </ul>
           {displayFace.traits && displayFace.traits.length > 0 && (
             <p className="card-inspect-traits">{displayFace.traits.join(' · ')}</p>
           )}

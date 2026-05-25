@@ -71,6 +71,7 @@ import {
 } from './game/rules';
 import type { ActionCard, GameState } from './game/types';
 import { animationDurations, defaultAnimationSpeed, isAnimationSpeed, type AnimationSpeed } from './ui/animationConfig';
+import { deriveFaceCompact } from './ui/formatters';
 import {
   STORAGE_KEY,
   describeTrapConsequence,
@@ -963,7 +964,7 @@ export function App() {
                           className="treasure-choice-card-btn"
                           onClick={() => setGame(chooseTreasureCard(game, cardId))}
                         >
-                          <span className="tcc-name">{card.text}</span>
+                          <span className="tcc-name">{deriveFaceCompact(card.effects, card.requiresLocations)}</span>
                           {card.manaCost !== null && <span className="tcc-mana">{card.manaCost} ◆</span>}
                         </button>
                       );
