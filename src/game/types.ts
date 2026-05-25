@@ -9,17 +9,18 @@ export type BaseCard = {
 
 export type ActionEffect =
   | { kind: 'damage'; value: number }
-  | { kind: 'damage-top-deck' }
+  | { kind: 'damage-top-deck'; bonus?: number }
   | { kind: 'defense'; value: number }
   | { kind: 'heal'; value: number }
   | { kind: 'draw'; value: number }
   | { kind: 'mana'; value: number }
-  | { kind: 'reroll-mana' }
+  | { kind: 'reroll-mana'; bonus?: number }
   | { kind: 'self-damage'; value: number }
   | { kind: 'discard-random' }
   | { kind: 'reroll-enemy-die'; maxRerolls: number }
   | { kind: 'cancel-enemy-keyword' }
-  | { kind: 'remove-from-combat' };
+  | { kind: 'remove-from-combat' }
+  | { kind: 'self-damage-x'; max: number };
 
 export type CardFaceData = {
   manaCost: number | null;
@@ -33,7 +34,6 @@ export type ActionCard = Omit<BaseCard, 'name'> & {
   manaCost: number | null;
   effects: ActionEffect[];
   traits?: string[];
-  notes?: string;
   level2?: CardFaceData;
   requiresLocations?: true;
 };
@@ -235,5 +235,6 @@ export type GameState = {
   pendingEnemyReroll: { remainingRerolls: number } | null;
   pendingKeywordCancel: boolean;
   pendingRemoveFromCombat: boolean;
+  pendingSelfDamageX: { max: number; targetInstanceId: string } | null;
   log: string[];
 };

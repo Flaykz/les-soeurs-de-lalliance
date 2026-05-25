@@ -27,7 +27,7 @@ export function flipCard(state: GameState, cardId: string): GameState {
 }
 
 export function faceNeedsTarget(face: CardFaceData): boolean {
-  return face.effects.some((e) => e.kind === 'damage' || e.kind === 'damage-top-deck');
+  return face.effects.some((e) => e.kind === 'damage' || e.kind === 'damage-top-deck' || e.kind === 'self-damage-x');
 }
 
 export function cardNeedsTarget(card: ActionCard, flippedCards: string[]): boolean {

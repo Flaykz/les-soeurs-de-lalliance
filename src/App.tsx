@@ -67,6 +67,7 @@ import {
   resolveEnemyDieReroll,
   resolveKeywordCancel,
   resolveRemoveFromCombat,
+  resolveSelfDamageX,
 } from './game/rules';
 import type { ActionCard, GameState } from './game/types';
 import { animationDurations, defaultAnimationSpeed, isAnimationSpeed, type AnimationSpeed } from './ui/animationConfig';
@@ -815,6 +816,18 @@ export function App() {
                           {e.enemyId}
                         </button>
                       ))}
+                  </div>
+                </div>
+              )}
+              {game.activeCombat && game.pendingSelfDamageX && (
+                <div className="pending-interaction-panel">
+                  <p className="pending-interaction-title">Choisissez X (0–{game.pendingSelfDamageX.max}) — Subissez X dégâts, infligez X dégâts, piochez 1 carte</p>
+                  <div className="pending-interaction-grid">
+                    {Array.from({ length: game.pendingSelfDamageX.max + 1 }, (_, i) => (
+                      <button key={i} className="secondary-button" onClick={() => setGame(resolveSelfDamageX(game, i))}>
+                        X = {i}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}

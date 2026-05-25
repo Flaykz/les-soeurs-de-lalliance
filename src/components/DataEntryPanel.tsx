@@ -95,7 +95,6 @@ function generateActionsTs(drafts: CardDrafts): string {
       lines.push(`      text: ${JSON.stringify(level2.text)},`);
       lines.push(`    },`);
     }
-    if (card.notes) lines.push(`    notes: ${JSON.stringify(card.notes)},`);
     lines.push(`  },`);
     if (card.id === 'ch1-action-16') {
       lines.push(``, `  // ── CARTES ACTION AVANCÉES A1 (8 cartes) ──────────────────────────────────`);

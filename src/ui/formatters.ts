@@ -9,13 +9,14 @@ export function formatValue(value: number | string | null) {
 export function formatActionEffects(card: ActionCard) {
   return card.effects.map((effect) => {
     if (effect.kind === 'damage') return `${effect.value} degats`;
-    if (effect.kind === 'damage-top-deck') return 'degats = cout mana top deck';
+    if (effect.kind === 'damage-top-deck') return effect.bonus ? `degats = cout mana top deck +${effect.bonus}` : 'degats = cout mana top deck';
     if (effect.kind === 'defense') return `+${effect.value} defense`;
     if (effect.kind === 'heal') return `+${effect.value} PV`;
     if (effect.kind === 'draw') return `pioche ${effect.value}`;
-    if (effect.kind === 'reroll-mana') return 'relance mana';
+    if (effect.kind === 'reroll-mana') return effect.bonus ? `relance mana +${effect.bonus}` : 'relance mana';
     if (effect.kind === 'self-damage') return `-${effect.value} PV (soi)`;
     if (effect.kind === 'discard-random') return 'defausse 1 carte au hasard';
+    if (effect.kind === 'self-damage-x') return `subis X / inflige X / pioche 1 (X 0–${effect.max})`;
     return `+${effect.value} mana`;
   }).join(', ');
 }
@@ -30,13 +31,14 @@ export function getEffectDisplays(card: ActionCard): { label: string; kind: stri
 
 function effectLabel(effect: ActionEffect): string {
   if (effect.kind === 'damage') return `⚔ ${effect.value}`;
-  if (effect.kind === 'damage-top-deck') return '⚔ ?';
+  if (effect.kind === 'damage-top-deck') return effect.bonus ? `⚔ ?+${effect.bonus}` : '⚔ ?';
   if (effect.kind === 'defense') return `🛡 ${effect.value}`;
   if (effect.kind === 'heal') return `♥ ${effect.value}`;
   if (effect.kind === 'draw') return `↑ ${effect.value}`;
-  if (effect.kind === 'reroll-mana') return '↺ ◆';
+  if (effect.kind === 'reroll-mana') return effect.bonus ? `↺ ◆+${effect.bonus}` : '↺ ◆';
   if (effect.kind === 'self-damage') return `-♥ ${effect.value}`;
   if (effect.kind === 'discard-random') return '↓ ?';
+  if (effect.kind === 'self-damage-x') return `⇄ X`;
   return `◆ ${effect.value}`;
 }
 

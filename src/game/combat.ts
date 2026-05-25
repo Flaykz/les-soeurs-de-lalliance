@@ -94,7 +94,7 @@ export function playActionCard(state: GameState, cardId: string, targetInstanceI
     return addLog(state, 'Les cartes ne peuvent etre jouees que pendant la phase joueuse.');
   }
 
-  if (state.pendingEnemyReroll || state.pendingKeywordCancel || state.pendingRemoveFromCombat) {
+  if (state.pendingEnemyReroll || state.pendingKeywordCancel || state.pendingRemoveFromCombat || state.pendingSelfDamageX) {
     return addLog(state, 'Resolvez d abord l effet en attente avant de jouer une autre carte.');
   }
 
@@ -112,6 +112,10 @@ export function playActionCard(state: GameState, cardId: string, targetInstanceI
 
   if (mana < face.manaCost) {
     return addLog(state, 'Mana insuffisante pour jouer cette carte.');
+  }
+
+  if (face.effects.some((e) => e.kind === 'reroll-mana') && !state.manaJustRolled) {
+    return addLog(state, 'Cette carte ne peut etre jouee qu au debut du round, juste apres le lancer de mana.');
   }
 
   const needsTarget = faceNeedsTarget(face);
@@ -153,7 +157,7 @@ export function endPlayerPhase(state: GameState): GameState {
     return addLog(state, 'La phase joueuse ne peut etre terminee qu apres le lancer de mana.');
   }
 
-  if (state.pendingEnemyReroll || state.pendingKeywordCancel || state.pendingRemoveFromCombat) {
+  if (state.pendingEnemyReroll || state.pendingKeywordCancel || state.pendingRemoveFromCombat || state.pendingSelfDamageX) {
     return addLog(state, 'Resolvez d abord l effet en attente avant de terminer la phase.');
   }
 
@@ -255,8 +259,8 @@ function applyActionEffects(state: GameState, face: CardFaceData, targetInstance
       const topCardId = nextState.deck[0];
       const topCard = topCardId ? getAction(topCardId) : null;
       const topFace = topCard ? getActiveCardFace(topCard, nextState.flippedCards) : null;
-      const dmg = topFace?.manaCost ?? 0;
-      nextState = addLog(nextState, `${dmg} degats (cout mana de la prochaine carte).`);
+      const dmg = (topFace?.manaCost ?? 0) + (effect.bonus ?? 0);
+      nextState = addLog(nextState, `${dmg} degats (cout mana de la prochaine carte${effect.bonus ? ` +${effect.bonus}` : ''}).`);
       damageHits.push(dmg);
     } else if (effect.kind === 'self-damage') {
       const { health, healthLimit } = applyDamageToHealth(nextState.health, nextState.healthLimit, effect.value);
@@ -279,8 +283,10 @@ function applyActionEffects(state: GameState, face: CardFaceData, targetInstance
       const mana = (nextState.mana ?? 0) + effect.value;
       nextState = addLog({ ...nextState, mana }, `+${effect.value} mana.`);
     } else if (effect.kind === 'reroll-mana') {
-      const mana = rollDie();
-      nextState = addLog({ ...nextState, mana }, `Nouveau lancer de mana → ${mana}.`);
+      const rolled = rollDie();
+      const mana = Math.min(6, rolled + (effect.bonus ?? 0));
+      const bonusMsg = effect.bonus ? ` +${effect.bonus} (plafonné à 6)` : '';
+      nextState = addLog({ ...nextState, mana }, `Nouveau lancer de mana → ${rolled}${bonusMsg} = ${mana}.`);
     } else if (effect.kind === 'discard-random') {
       if (nextState.hand.length > 0) {
         const randomIndex = Math.floor(Math.random() * nextState.hand.length);
@@ -304,6 +310,11 @@ function applyActionEffects(state: GameState, face: CardFaceData, targetInstance
       nextState = addLog(
         { ...nextState, pendingRemoveFromCombat: true },
         "Choisissez un ennemi (avec mot-cle) a retirer du combat."
+      );
+    } else if (effect.kind === 'self-damage-x') {
+      nextState = addLog(
+        { ...nextState, pendingSelfDamageX: { max: effect.max, targetInstanceId: targetInstanceId ?? '' } },
+        `Choisissez X (0–${effect.max}) : subissez X dégâts, infligez X dégâts, piochez 1 carte.`
       );
     }
   }
@@ -460,6 +471,28 @@ export function resolveRemoveFromCombat(state: GameState, instanceId: string): G
     });
   }
 
+  return nextState;
+}
+
+export function resolveSelfDamageX(state: GameState, x: number): GameState {
+  if (!state.activeCombat || !state.pendingSelfDamageX) return state;
+
+  const { max, targetInstanceId } = state.pendingSelfDamageX;
+  const clampedX = Math.max(0, Math.min(max, x));
+  let nextState: GameState = { ...state, pendingSelfDamageX: null };
+
+  if (clampedX > 0) {
+    const { health, healthLimit } = applyDamageToHealth(nextState.health, nextState.healthLimit, clampedX);
+    nextState = addLog({ ...nextState, health, healthLimit }, `Subissez ${clampedX} dégât(s) (auto-infligé).`);
+    if (health <= 0) {
+      return addLog({ ...nextState, phase: 'game-over' }, 'Defaite. La partie est terminee.');
+    }
+    nextState = applyActionDamage(nextState, clampedX, targetInstanceId);
+  } else {
+    nextState = addLog(nextState, 'X = 0 : aucun dégât échangé.');
+  }
+
+  nextState = drawActionCards(nextState, 1, 'Pioche');
   return nextState;
 }
 

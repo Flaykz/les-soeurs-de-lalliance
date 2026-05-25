@@ -61,6 +61,7 @@ export function createInitialGameState(bossId: string, options: { useLocations?:
     pendingEnemyReroll: null,
     pendingKeywordCancel: false,
     pendingRemoveFromCombat: false,
+    pendingSelfDamageX: null,
     log: [`Boss choisi : ${boss.name}. Deck action melange, main de depart piochee. ${tower.name} commence.`]
   });
 }

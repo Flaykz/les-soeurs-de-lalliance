@@ -72,7 +72,6 @@ export function CardInspectOverlay({ card, flippedCards, xp, canUpgrade, onUpgra
               <span className={`effect-badge effect-${kind}`} key={i}>{label}</span>
             ))}
           </div>
-          {card.notes && <p className="card-inspect-notes muted">{card.notes}</p>}
         </div>
         <div className="card-inspect-actions">
           {upgradeAvailable && onUpgrade && (
