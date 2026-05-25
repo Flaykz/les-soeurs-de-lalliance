@@ -3,6 +3,14 @@ import { getAction, resolveCardForDisplay } from '../game/rules';
 import type { ActionCard, GameState } from '../game/types';
 import { ActionCardContent } from './CardCatalog';
 
+function getTopDeckManaCost(game: GameState): number | undefined {
+  const topId = game.deck[0];
+  if (!topId) return undefined;
+  const top = getAction(topId);
+  if (!top) return undefined;
+  return resolveCardForDisplay(top, game.flippedCards).manaCost ?? undefined;
+}
+
 const FAN_ANGLE = 3;
 const PLAY_THRESHOLD = 100;
 const VISUAL_DRAG_THRESHOLD = 8;
@@ -23,6 +31,7 @@ export function HandDock({ game, onPlayCard, onInspectCard, onDiscardForTrap, un
   const dragDeltaY = dragState ? Math.max(0, dragState.startY - dragState.currentY) : 0;
   const isDragReady = dragDeltaY >= PLAY_THRESHOLD;
 
+  const topDeckManaCost = getTopDeckManaCost(game);
   const n = game.hand.length;
   const mid = (n - 1) / 2;
 
@@ -106,12 +115,9 @@ export function HandDock({ game, onPlayCard, onInspectCard, onDiscardForTrap, un
               }}
               type="button"
             >
-              <ActionCardContent card={card} isLevel2={game.flippedCards.includes(cardId)} />
+              <ActionCardContent card={card} isLevel2={game.flippedCards.includes(cardId)} topDeckManaCost={topDeckManaCost} />
               {trapMode && (
                 <span className="discard-ready-badge" aria-hidden="true">↓</span>
-              )}
-              {!trapMode && canDiscardForMana && (
-                <span className="mana-discard-ready-badge" aria-hidden="true">◆</span>
               )}
             </button>
           );

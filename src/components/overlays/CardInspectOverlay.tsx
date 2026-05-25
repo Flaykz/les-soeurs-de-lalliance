@@ -5,7 +5,7 @@ import { deriveFaceLines, formatValue } from '../../ui/formatters';
 
 const UPGRADE_XP_COST = 1;
 
-export function CardInspectOverlay({ card, flippedCards, xp, canUpgrade, onUpgrade, onClose, onPlay, playDisabledReason, onDiscardForMana, discardDisabled }: {
+export function CardInspectOverlay({ card, flippedCards, xp, canUpgrade, onUpgrade, onClose, onPlay, playDisabledReason, onDiscardForMana, discardDisabled, topDeckManaCost }: {
   card: ActionCard | null;
   flippedCards: string[];
   xp?: number;
@@ -16,6 +16,7 @@ export function CardInspectOverlay({ card, flippedCards, xp, canUpgrade, onUpgra
   playDisabledReason?: string | null;
   onDiscardForMana?: () => void;
   discardDisabled?: boolean;
+  topDeckManaCost?: number;
 }) {
   const justOpenedRef = useRef(false);
   const [showingLevel2, setShowingLevel2] = useState(false);
@@ -56,7 +57,7 @@ export function CardInspectOverlay({ card, flippedCards, xp, canUpgrade, onUpgra
             </span>
           </div>
           <ul className="card-inspect-lines">
-            {deriveFaceLines(displayFace.effects, card.requiresLocations).map((line, i) => (
+            {deriveFaceLines(displayFace.effects, card.requiresLocations, topDeckManaCost).map((line, i) => (
               <li key={i}>{line}</li>
             ))}
           </ul>

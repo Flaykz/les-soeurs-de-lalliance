@@ -6,14 +6,21 @@ export function formatValue(value: number | string | null) {
   return value ?? '?';
 }
 
-function effectToSentence(effect: ActionEffect): string {
+function effectToSentence(effect: ActionEffect, topDeckManaCost?: number): string {
   switch (effect.kind) {
     case 'damage':
       return `Infligez ${effect.value} dégât${effect.value > 1 ? 's' : ''}.`;
-    case 'damage-top-deck':
+    case 'damage-top-deck': {
+      if (topDeckManaCost !== undefined) {
+        const total = topDeckManaCost + (effect.bonus ?? 0);
+        return effect.bonus
+          ? `Infligez ${total} dégâts (${topDeckManaCost}+${effect.bonus}, coût Mana du dessus du deck).`
+          : `Infligez ${total} dégâts (coût Mana du dessus du deck).`;
+      }
       return effect.bonus
         ? `Infligez X+${effect.bonus} dégâts (X = coût Mana du dessus du deck Action).`
         : `Infligez X dégâts (X = coût Mana du dessus du deck Action).`;
+    }
     case 'defense':
       return `Gagnez ${effect.value} Défense${effect.value > 1 ? 's' : ''}.`;
     case 'heal':
@@ -43,10 +50,10 @@ function effectToSentence(effect: ActionEffect): string {
   }
 }
 
-export function deriveFaceLines(effects: ActionEffect[], requiresLocations?: boolean): string[] {
+export function deriveFaceLines(effects: ActionEffect[], requiresLocations?: boolean, topDeckManaCost?: number): string[] {
   const lines: string[] = [];
   if (requiresLocations) lines.push('Changez de lieu. Condition : début du combat.');
-  for (const effect of effects) lines.push(effectToSentence(effect));
+  for (const effect of effects) lines.push(effectToSentence(effect, topDeckManaCost));
   return lines;
 }
 
@@ -76,13 +83,17 @@ export function formatActionEffectIcons(card: ActionCard) {
   return card.effects.map((effect) => effectLabel(effect)).join(' ');
 }
 
-export function getEffectDisplays(card: { effects: ActionEffect[] }): { label: string; kind: string }[] {
-  return card.effects.map((effect) => ({ label: effectLabel(effect), kind: effect.kind }));
+export function getEffectDisplays(card: { effects: ActionEffect[] }, topDeckManaCost?: number): { label: string; kind: string }[] {
+  return card.effects.map((effect) => ({ label: effectLabel(effect, topDeckManaCost), kind: effect.kind }));
 }
 
-function effectLabel(effect: ActionEffect): string {
+function effectLabel(effect: ActionEffect, topDeckManaCost?: number): string {
   if (effect.kind === 'damage') return `⚔ ${effect.value}`;
-  if (effect.kind === 'damage-top-deck') return effect.bonus ? `⚔ ?+${effect.bonus}` : '⚔ ?';
+  if (effect.kind === 'damage-top-deck') {
+    const x = topDeckManaCost ?? null;
+    if (x !== null) return effect.bonus ? `⚔ ${x + effect.bonus}` : `⚔ ${x}`;
+    return effect.bonus ? `⚔ ?+${effect.bonus}` : '⚔ ?';
+  }
   if (effect.kind === 'defense') return `🛡 ${effect.value}`;
   if (effect.kind === 'heal') return `♥ ${effect.value}`;
   if (effect.kind === 'draw') return `↑ ${effect.value}`;

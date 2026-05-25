@@ -1228,6 +1228,7 @@ export function App() {
       <CardInspectOverlay
         card={inspectedCard}
         canUpgrade={inspectedCard ? canUpgradeCard(game, inspectedCard.id) : false}
+        topDeckManaCost={(() => { const id = game.deck[0]; if (!id) return undefined; const c = getAction(id); return c ? (resolveCardForDisplay(c, game.flippedCards).manaCost ?? undefined) : undefined; })()}
         discardDisabled={inspectedHandIndex === null || Boolean(getDiscardForManaDisabledReason(game, inspectedHandIndex ?? 0))}
         flippedCards={game.flippedCards}
         onClose={closeInspect}

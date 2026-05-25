@@ -78,7 +78,7 @@ function TowerCardTile({ tower }: { tower: TowerDefinition }) {
   );
 }
 
-export function ActionCardContent({ card, isLevel2 }: { card: ActionCard; isLevel2?: boolean }) {
+export function ActionCardContent({ card, isLevel2, topDeckManaCost }: { card: ActionCard; isLevel2?: boolean; topDeckManaCost?: number }) {
   const kindLabel = isLevel2
     ? (card.kind === 'advanced-action' ? 'A2' : '2')
     : (card.kind === 'advanced-action' ? 'A1' : '1');
@@ -88,7 +88,7 @@ export function ActionCardContent({ card, isLevel2 }: { card: ActionCard; isLeve
       <span className={`hand-card-kind${isLevel2 ? ' level-2' : ''}`}>{kindLabel}</span>
       <div className="hand-card-bottom">
         <div className="effect-row">
-          {getEffectDisplays(card).map(({ label: l, kind }, i) => (
+          {getEffectDisplays(card, topDeckManaCost).map(({ label: l, kind }, i) => (
             <span className={`effect-badge effect-${kind}`} key={i}>{l}</span>
           ))}
         </div>
