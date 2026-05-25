@@ -167,9 +167,15 @@
   .player-character-card {
     grid-column: 1;
     grid-row: 2;
-    width: var(--card-w);
+    width: max(var(--card-w), 152px);
     flex: none;
     min-height: 190px;
+  }
+
+  .player-stat-bubble {
+    width: 48px;
+    min-height: 48px;
+    padding: 3px 2px;
   }
 
   .combat-center {

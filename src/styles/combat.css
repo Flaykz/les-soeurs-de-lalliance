@@ -36,7 +36,7 @@
 
 .combat-arena {
   display: grid;
-  grid-template-columns: 180px 1fr auto;
+  grid-template-columns: 200px 1fr auto;
   gap: 16px;
   align-items: center;
 }
@@ -71,8 +71,8 @@
 .player-character-card {
   position: relative;
   display: grid;
-  flex: 0 0 180px;
-  width: 180px;
+  flex: 0 0 200px;
+  width: 200px;
   min-height: 260px;
   grid-template-rows: auto auto 1fr auto;
   gap: 8px;
@@ -108,13 +108,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
+  width: 56px;
+  min-height: 56px;
+  border-radius: 999px;
   font-weight: 900;
   line-height: 1;
   flex-shrink: 0;
-  gap: 1px;
+  gap: 2px;
+  overflow: hidden;
+  padding: 4px 2px;
 }
 
 .player-hp-stat {
@@ -129,21 +131,48 @@
   color: #38bdf8;
 }
 
-.player-card-art {
+.player-potion-btn {
+  position: relative;
   display: grid;
   min-height: 72px;
   place-items: center;
   border: 1px solid rgba(56, 189, 248, 0.14);
   border-radius: 14px;
-  color: #38bdf8;
   background: rgba(4, 10, 22, 0.48);
-  font-size: 2.1rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  width: 100%;
 }
 
-.player-card-art svg {
-  display: block;
-  width: 60%;
-  height: 60%;
+.player-potion-btn:not(:disabled):hover,
+.player-potion-btn:not(:disabled):active {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.player-potion-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.player-potion-icon {
+  font-size: 2.1rem;
+  color: #10b981;
+  line-height: 1;
+}
+
+.player-potion-btn:disabled .player-potion-icon {
+  color: #6b7280;
+}
+
+.player-potion-count {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #10b981;
+  line-height: 1;
 }
 
 .player-mana-roll {
@@ -257,10 +286,16 @@
 }
 
 .combat-show-decks-btn {
-  font-size: 1rem;
-  padding: 14px 28px;
-  min-height: 52px;
   width: 100%;
+}
+
+.stepper-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  flex-shrink: 0;
 }
 
 .mana-roll {

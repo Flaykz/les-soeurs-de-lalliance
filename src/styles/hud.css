@@ -96,6 +96,26 @@
   opacity: 0.45;
 }
 
+.utility-actions button {
+  position: relative;
+}
+
+.utility-btn-count {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #facc15;
+  color: #1a1a2e;
+  font-size: 0.6rem;
+  font-weight: 800;
+  line-height: 14px;
+  pointer-events: none;
+}
+
 .action-hint {
   border-radius: 999px;
   padding: 10px 14px;

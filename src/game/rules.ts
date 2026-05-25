@@ -53,6 +53,7 @@ export function createInitialGameState(bossId: string, options: { useLocations?:
     playerFeedback: null,
     trapFeedback: null,
     treasureFeedback: null,
+    blockedMovementFeedback: null,
     flippedCards: [],
     banishableCardId: null,
     pendingHasteAttack: null,

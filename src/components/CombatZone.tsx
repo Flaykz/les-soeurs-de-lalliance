@@ -5,7 +5,7 @@ import { formatValue } from '../ui/formatters';
 import { DieFace } from './DieFace';
 import { EnemyCardDisplay } from './EnemyCard';
 
-export function CombatZone({ activeEnemies, canSelectEnemy, combatFeedback, combatPhase, combatRound, defense, deckNode, health, mana, xp, onEndPlayerPhase, onResolveHaste, onRollMana, onSelectEnemy, onShowDecks, pendingHasteAttack, playerFeedback, selectedEnemyInstanceId, xpActionsNode }: {
+export function CombatZone({ activeEnemies, canSelectEnemy, combatFeedback, combatPhase, combatRound, defense, deckNode, health, mana, xp, onEndPlayerPhase, onResolveHaste, onRollMana, onSelectEnemy, onShowDecks, onUsePotion, pendingHasteAttack, playerFeedback, potions, selectedEnemyInstanceId, xpActionsNode }: {
   activeEnemies: Array<{ instanceId: string; enemyId: string; enemyHealth: number; resolvedAttack: number; card: EnemyCard | undefined; isUntargetable?: boolean }>;
   canSelectEnemy: boolean;
   combatFeedback: CombatFeedback | null;
@@ -21,8 +21,10 @@ export function CombatZone({ activeEnemies, canSelectEnemy, combatFeedback, comb
   onRollMana: () => void;
   onSelectEnemy: (enemyInstanceId: string) => void;
   onShowDecks?: () => void;
+  onUsePotion: () => void;
   pendingHasteAttack: number | null;
   playerFeedback: PlayerFeedback | null;
+  potions: number;
   selectedEnemyInstanceId: string | null;
   xpActionsNode?: React.ReactNode;
 }) {
@@ -55,21 +57,22 @@ export function CombatZone({ activeEnemies, canSelectEnemy, combatFeedback, comb
             {defense > 0 && (
               <span className="player-stat-bubble player-def-stat" aria-label={`${defense} defense`}>
                 <span className="bubble-value">{defense}</span>
-                <span className="bubble-label">⛨ DEF</span>
+                <span className="bubble-label">🛡 DEF</span>
               </span>
             )}
           </div>
 
           <strong>Aventuriere</strong>
 
-          <div className="player-card-art" aria-hidden="true">
-            <svg viewBox="0 0 64 64">
-              <circle cx="32" cy="14" r="9" fill="currentColor" />
-              <path d="M18 58 C18 38 46 38 46 58 Z" fill="currentColor" />
-              <path d="M8 32 L20 40" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
-              <path d="M44 40 L56 32" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
-            </svg>
-          </div>
+          <button
+            className="player-potion-btn"
+            disabled={potions <= 0}
+            onClick={onUsePotion}
+            aria-label={`Utiliser une potion (${potions} restante${potions > 1 ? 's' : ''})`}
+          >
+            <span className="player-potion-icon">✚</span>
+            {potions > 0 && <span className="player-potion-count">{potions}</span>}
+          </button>
 
           <div className="player-bottom-row">
             {mana !== null && (
@@ -92,7 +95,7 @@ export function CombatZone({ activeEnemies, canSelectEnemy, combatFeedback, comb
             <div className="combat-action-row">
               {combatFeedback?.combatEnded && <span className="combat-end-badge">Combat termine</span>}
               {!combatFeedback && combatPhase === 'roll-mana' && <button className="action-pulse" onClick={onRollMana}>Lancer le de de mana</button>}
-              {!combatFeedback && combatPhase === 'player' && <button onClick={onEndPlayerPhase}>Passer a la phase ennemie</button>}
+              {!combatFeedback && combatPhase === 'player' && <button className="action-pulse" onClick={onEndPlayerPhase}>Passer a la phase ennemie</button>}
               {!combatFeedback && combatPhase === 'haste' && pendingHasteAttack !== null && (
                 <div className="haste-attack-panel">
                   <p className="eyebrow haste-label">Hâte — Attaque immédiate</p>
@@ -101,9 +104,9 @@ export function CombatZone({ activeEnemies, canSelectEnemy, combatFeedback, comb
                     {hasteManaSept > 0 && <> — {hasteManaSept} mana bloqués</>}
                   </p>
                   <div className="haste-mana-stepper">
-                    <button disabled={hasteManaSept <= 0} onClick={() => setHasteManaSpent((v) => Math.max(0, v - 1))}>−</button>
+                    <button className="stepper-btn" disabled={hasteManaSept <= 0} onClick={() => setHasteManaSpent((v) => Math.max(0, v - 1))}>−</button>
                     <span>{hasteManaSept} / {maxHasteBlock} mana</span>
-                    <button disabled={hasteManaSept >= maxHasteBlock} onClick={() => setHasteManaSpent((v) => Math.min(maxHasteBlock, v + 1))}>+</button>
+                    <button className="stepper-btn" disabled={hasteManaSept >= maxHasteBlock} onClick={() => setHasteManaSpent((v) => Math.min(maxHasteBlock, v + 1))}>+</button>
                   </div>
                   <button className="action-pulse" onClick={() => { onResolveHaste(hasteManaSept); setHasteManaSpent(0); }}>
                     Résoudre la Hâte

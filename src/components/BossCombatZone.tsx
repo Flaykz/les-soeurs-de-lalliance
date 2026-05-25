@@ -15,7 +15,9 @@ export function BossCombatZone({
   onRollMana,
   onSelectDie,
   onShowDecks,
+  onUsePotion,
   playerFeedback,
+  potions,
   selectedDieIndex,
   xp,
   xpActionsNode,
@@ -32,7 +34,9 @@ export function BossCombatZone({
   onRollMana: () => void;
   onSelectDie: (index: number) => void;
   onShowDecks?: () => void;
+  onUsePotion: () => void;
   playerFeedback: PlayerFeedback | null;
+  potions: number;
   selectedDieIndex: number | null;
   xp: number;
   xpActionsNode?: React.ReactNode;
@@ -117,14 +121,15 @@ export function BossCombatZone({
 
           <strong>Aventurière</strong>
 
-          <div className="player-card-art" aria-hidden="true">
-            <svg viewBox="0 0 64 64">
-              <circle cx="32" cy="14" r="9" fill="currentColor" />
-              <path d="M18 58 C18 38 46 38 46 58 Z" fill="currentColor" />
-              <path d="M8 32 L20 40" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
-              <path d="M44 40 L56 32" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
-            </svg>
-          </div>
+          <button
+            className="player-potion-btn"
+            disabled={potions <= 0}
+            onClick={onUsePotion}
+            aria-label={`Utiliser une potion (${potions} restante${potions > 1 ? 's' : ''})`}
+          >
+            <span className="player-potion-icon">✚</span>
+            {potions > 0 && <span className="player-potion-count">{potions}</span>}
+          </button>
 
           <div className="player-bottom-row">
             {mana !== null && (
@@ -151,7 +156,7 @@ export function BossCombatZone({
                 </button>
               )}
               {!bossCombatFeedback && bossCombat.phase === 'player' && (
-                <button onClick={onEndPlayerPhase} type="button">
+                <button className="action-pulse" onClick={onEndPlayerPhase} type="button">
                   Passer à l'attaque du boss
                 </button>
               )}

@@ -7,23 +7,34 @@ const TRAP_TABLE = [
   { rolls: [6], label: 'Défausser 5 cartes du deck' },
 ];
 
+const TRAP_ADVANCED_TABLE = [
+  { rolls: [1], label: 'Piège Niv. 5', sub: 'lancer dé défense' },
+  { rolls: [2], label: 'Piège Niv. 6', sub: 'lancer dé défense' },
+  { rolls: [3], label: 'Piège Niv. 8', sub: 'lancer dé défense' },
+  { rolls: [4], label: '−4 PV direct' },
+  { rolls: [5], label: 'Défausser cartes avancées de la main' },
+  { rolls: [6], label: 'Défausser toute la main' },
+];
+
 const SCAN_STEP_MS = 220;
 const SCAN_LINGER_MS = 900;
 
 interface Props {
+  advanced?: boolean;
   highlightedRoll?: number;
   scanning?: boolean;
 }
 
-export function TrapReferenceCard({ highlightedRoll, scanning }: Props) {
+export function TrapReferenceCard({ advanced, highlightedRoll, scanning }: Props) {
+  const table = advanced ? TRAP_ADVANCED_TABLE : TRAP_TABLE;
   const targetRowIndex = highlightedRoll !== undefined
-    ? TRAP_TABLE.findIndex((row) => row.rolls.includes(highlightedRoll))
+    ? table.findIndex((row) => row.rolls.includes(highlightedRoll))
     : -1;
 
   return (
     <div className="trap-ref-card">
-      <p className="trap-ref-title">Table du Piège</p>
-      {TRAP_TABLE.map((row, index) => {
+      <p className="trap-ref-title">{advanced ? 'Table du Piège avancé' : 'Table du Piège'}</p>
+      {table.map((row, index) => {
         const isTarget = highlightedRoll !== undefined && row.rolls.includes(highlightedRoll);
         const isScanRow = scanning && targetRowIndex !== -1 && index <= targetRowIndex;
 

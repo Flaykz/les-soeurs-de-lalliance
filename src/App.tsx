@@ -10,6 +10,8 @@ import { CardInspectOverlay } from './components/overlays/CardInspectOverlay';
 import { computePreviewEvents, ResolutionPreviewOverlay, type PreviewEvent } from './components/overlays/ResolutionPreviewOverlay';
 import { DecksOverlay } from './components/overlays/DecksOverlay';
 import { LogOverlay } from './components/overlays/LogOverlay';
+import { MainMenuOverlay } from './components/overlays/MainMenuOverlay';
+import { BestiaryOverlay } from './components/overlays/BestiaryOverlay';
 import { TowerStackOverlay } from './components/overlays/TowerStackOverlay';
 import { TowerGrid } from './components/TowerGrid';
 import { TrapReferenceCard } from './components/TrapReferenceCard';
@@ -94,6 +96,8 @@ const ANIMATION_SPEED_KEY = 'lsa-animation-speed';
 export function App() {
   const [game, setGame] = useState<GameState | null>(() => loadSavedGame());
   const [showLog, setShowLog] = useState(false);
+  const [showMainMenu, setShowMainMenu] = useState(false);
+  const [showBestiary, setShowBestiary] = useState(false);
   const [showTowerStack, setShowTowerStack] = useState(false);
   const [showDecks, setShowDecks] = useState(false);
   const [selectedEnemyInstanceId, setSelectedEnemyInstanceId] = useState<string | null>(null);
@@ -106,14 +110,20 @@ export function App() {
   const [movementPreview, setMovementPreview] = useState<{ events: PreviewEvent[]; pendingGame: GameState } | null>(null);
   const [showTrapIntro, setShowTrapIntro] = useState(false);
   const [showTrapLevelIntro, setShowTrapLevelIntro] = useState(false);
+  const [showCombatIntro, setShowCombatIntro] = useState(false);
+  const [showTreasureIntro, setShowTreasureIntro] = useState(false);
+  const [showBlockedMovement, setShowBlockedMovement] = useState(false);
+  const [towerTransitionInfo, setTowerTransitionInfo] = useState<{ name: string; index: number; total: number; isBoss: boolean } | null>(null);
   const [rollingCellDie, setRollingCellDie] = useState(false);
   const [trapDiscardAnimCardId, setTrapDiscardAnimCardId] = useState<string | null>(null);
   const prevHealthRef = useRef<number | null>(null);
-  const prevXpRef = useRef<number | null>(null);
   // Initialiser depuis le game state sauvegardé pour éviter de faux déclenchements d'animation au refresh
   const prevPendingCellRollRef = useRef<GameState['pendingCellRoll'] | null>(game?.pendingCellRoll ?? null);
   const prevTrapFeedbackRef = useRef<GameState['trapFeedback']>(game?.trapFeedback ?? null);
   const prevPendingTrapLevelDiscardRef = useRef<GameState['pendingTrapLevelDiscard']>(game?.pendingTrapLevelDiscard ?? null);
+  const prevActiveCombatRef = useRef<GameState['activeCombat']>(game?.activeCombat ?? null);
+  const prevBlockedMovementRef = useRef<GameState['blockedMovementFeedback']>(null);
+  const prevTowerIndexRef = useRef<number>(game?.currentTowerIndex ?? 0);
   const shellRef = useRef<HTMLElement>(null);
   const prevPhaseKeyRef = useRef('');
   const [animationSpeed, setAnimationSpeed] = useState<AnimationSpeed>(() => {
@@ -264,13 +274,54 @@ export function App() {
     const prev = prevPendingCellRollRef.current;
     const current = game.pendingCellRoll;
     prevPendingCellRollRef.current = current;
+    let timer: number | undefined;
     if (prev?.kind !== 'trap' && current?.kind === 'trap') {
-      const introMs = animationDurations[animationSpeed].trapIntro;
       setShowTrapIntro(true);
-      const timer = window.setTimeout(() => setShowTrapIntro(false), introMs);
+      timer = window.setTimeout(() => setShowTrapIntro(false), animationDurations[animationSpeed].trapIntro);
+    } else if (prev?.kind !== 'treasure' && prev?.kind !== 'treasure-advanced' && (current?.kind === 'treasure' || current?.kind === 'treasure-advanced')) {
+      setShowTreasureIntro(true);
+      timer = window.setTimeout(() => setShowTreasureIntro(false), animationDurations[animationSpeed].treasureIntro);
+    }
+    return () => { if (timer !== undefined) window.clearTimeout(timer); };
+  }, [animationSpeed, game?.pendingCellRoll]);
+
+  useEffect(() => {
+    if (!game) return;
+    const prev = prevActiveCombatRef.current;
+    const current = game.activeCombat;
+    prevActiveCombatRef.current = current;
+    if (!prev && current) {
+      setShowCombatIntro(true);
+      const timer = window.setTimeout(() => setShowCombatIntro(false), animationDurations[animationSpeed].combatIntro);
       return () => window.clearTimeout(timer);
     }
-  }, [animationSpeed, game?.pendingCellRoll]);
+  }, [animationSpeed, game?.activeCombat]);
+
+  useEffect(() => {
+    if (!game) return;
+    const prev = prevTowerIndexRef.current;
+    const current = game.currentTowerIndex;
+    prevTowerIndexRef.current = current;
+    if (current > prev) {
+      const tower = getCurrentTower(game);
+      const isBoss = game.currentTowerIndex === game.towerIds.length - 1;
+      setTowerTransitionInfo({ name: tower?.name ?? '', index: current + 1, total: game.towerIds.length, isBoss });
+      const timer = window.setTimeout(() => setTowerTransitionInfo(null), animationDurations[animationSpeed].towerTransition);
+      return () => window.clearTimeout(timer);
+    }
+  }, [animationSpeed, game?.currentTowerIndex]);
+
+  useEffect(() => {
+    if (!game) return;
+    const prev = prevBlockedMovementRef.current;
+    const current = game.blockedMovementFeedback;
+    prevBlockedMovementRef.current = current;
+    if (!prev && current) {
+      setShowBlockedMovement(true);
+      const timer = window.setTimeout(() => setShowBlockedMovement(false), animationDurations[animationSpeed].trapIntro);
+      return () => window.clearTimeout(timer);
+    }
+  }, [animationSpeed, game?.blockedMovementFeedback]);
 
   useEffect(() => {
     if (!game) return;
@@ -288,7 +339,6 @@ export function App() {
   useLayoutEffect(() => {
     if (!game) return;
     prevHealthRef.current = game.health;
-    prevXpRef.current = game.xp;
   });
 
 
@@ -299,6 +349,7 @@ export function App() {
         <BossSelection
           animationSpeed={animationSpeed}
           onAnimationSpeedChange={setAnimationSpeed}
+          onOpenMenu={() => setShowMainMenu(true)}
           onStartGame={(state) => {
             setGame(state);
             requestAnimationFrame(() => {
@@ -306,6 +357,18 @@ export function App() {
             });
           }}
         />
+        {showMainMenu && (
+          <MainMenuOverlay
+            onClose={() => setShowMainMenu(false)}
+            onOpenBestiary={() => setShowBestiary(true)}
+            onOpenLog={() => {}}
+            onOpenTowerStack={() => setShowTowerStack(true)}
+            onNewGame={() => {}}
+          />
+        )}
+        {showBestiary && (
+          <BestiaryOverlay onClose={() => setShowBestiary(false)} />
+        )}
       </>
     );
   }
@@ -356,7 +419,6 @@ export function App() {
   } as CSSProperties;
 
   const healthDelta = prevHealthRef.current !== null ? game.health - prevHealthRef.current : 0;
-  const xpDelta = prevXpRef.current !== null ? game.xp - prevXpRef.current : 0;
 
   function makeCrossedCells(cellIds: string[]): TowerCell[] {
     if (!game) return [];
@@ -559,21 +621,12 @@ export function App() {
           key={`hp-${game.health}`}
           title={`Points de vie (plafond ${game.healthLimit})`}
         ><span aria-hidden="true">♥</span>{game.health}</span>
-        <span
-          className={`status-bubble${xpDelta > 0 ? ' bubble-gained' : ''}`}
-          key={`xp-${game.xp}`}
-          title="Experience"
-        ><span aria-hidden="true">✦</span>{game.xp}</span>
-        <span className="status-bubble" title="Potions"><span aria-hidden="true">✚</span>{game.potions}</span>
       </section>
 
       <section className="floating-actions" aria-label="Action principale" />
 
       <section className="utility-actions" aria-label="Actions utilitaires">
-        <button onClick={() => setShowDecks(true)} title="Paquets" aria-label="Paquets">▤</button>
-        <button onClick={() => setShowTowerStack(true)} title="Tours" aria-label="Tours">▦</button>
-        <button onClick={() => setShowLog(true)} title="Journal" aria-label="Journal">☰</button>
-        <button onClick={() => setGame(usePotion(game))} disabled={game.potions <= 0} title="Utiliser une potion" aria-label="Utiliser une potion">✚</button>
+        <button onClick={() => setShowMainMenu(true)} title="Menu" aria-label="Menu">☰</button>
       </section>
 
       {showTowerStack && (
@@ -585,6 +638,7 @@ export function App() {
           buyActionDisabledReason={buyActionDisabledReason}
           game={game}
           onBuyAdvancedActionCard={buyAdvancedCard}
+          onCycleAdvancedDeckCard={cycleAdvancedCard}
           onBuyActionCard={buyActionCard}
           onBuyPotion={buyPotion}
           onClose={() => setShowDecks(false)}
@@ -649,19 +703,21 @@ export function App() {
               onRollMana={() => setGame(rollBossMana(game))}
               onSelectDie={setSelectedBossDieIndex}
               onShowDecks={() => setShowDecks(true)}
+              onUsePotion={() => setGame(usePotion(game))}
               playerFeedback={game.playerFeedback}
+              potions={game.potions}
               selectedDieIndex={selectedBossDieIndex}
               xp={game.xp}
               xpActionsNode={<>
                 {canActInBossCombat && game.xp >= 1 && (
-                  <button onClick={rerollMana}>Relancer mana · 1 XP</button>
+                  <button className="secondary-button" onClick={rerollMana}>Relancer mana · 1 XP</button>
                 )}
                 {game.banishableCardId && (
-                  <button disabled={!canBanishPlayedCard(game)} onClick={banishPlayedCard}>Bannir carte jouée · 1 XP</button>
+                  <button className="secondary-button" disabled={!canBanishPlayedCard(game)} onClick={banishPlayedCard}>Bannir carte jouée · 1 XP</button>
                 )}
               </>}
             />
-          ) : game.activeCombat && activeEnemies.length > 0 ? (
+          ) : game.activeCombat && !showCombatIntro && activeEnemies.length > 0 ? (
             <>
               <CombatZone
                 activeEnemies={activeEnemies}
@@ -729,14 +785,16 @@ export function App() {
                 pendingHasteAttack={game.pendingHasteAttack}
                 onSelectEnemy={chooseEnemyTarget}
                 onShowDecks={() => setShowDecks(true)}
+                onUsePotion={() => setGame(usePotion(game))}
+                potions={game.potions}
                 selectedEnemyInstanceId={selectedEnemyInstanceId}
                 xp={game.xp}
                 xpActionsNode={<>
                   {game.activeCombat?.phase === 'player' && game.mana !== null && !game.combatFeedback && game.xp >= 1 && (
-                    <button onClick={rerollMana}>Relancer mana · 1 XP</button>
+                    <button className="secondary-button" onClick={rerollMana}>Relancer mana · 1 XP</button>
                   )}
                   {game.banishableCardId && (
-                    <button disabled={!canBanishPlayedCard(game)} onClick={banishPlayedCard}>Bannir carte jouee · 1 XP</button>
+                    <button className="secondary-button" disabled={!canBanishPlayedCard(game)} onClick={banishPlayedCard}>Bannir carte jouee · 1 XP</button>
                   )}
                 </>}
               />
@@ -899,25 +957,29 @@ export function App() {
                   <button disabled={!canRerollMovementWithXp} onClick={rerollMovement}>Relancer les des · 1 XP</button>
                 </section>
               )}
-              {game.pendingCellRoll && !showTrapIntro && !game.trapFeedback && (
-                <section className={`resolution-panel${game.pendingCellRoll.kind === 'trap' ? ' trap-resolution' : ''}`} aria-label="Resolution en attente">
-                  <p className="eyebrow">{game.pendingCellRoll.kind === 'trap' ? 'Piege' : 'Tresor'}</p>
-                  <h3>{pendingCell?.label ?? 'Case a resoudre'}</h3>
-                  <p className="muted">Lance le de pour reveler le resultat avant d'appliquer son effet.</p>
-                  {game.pendingCellRoll.kind === 'trap' && <TrapReferenceCard />}
-                  {game.pendingCellRoll.kind === 'treasure' && <TreasureReferenceCard />}
-                  {rollingCellDie ? (
-                    <RollingDie onSettle={() => {
-                      setRollingCellDie(false);
-                      setGame((g) => g ? rollPendingCellResolution(g) : g);
-                    }} />
-                  ) : (
-                    <button className="action-pulse" onClick={() => setRollingCellDie(true)}>
-                      Lancer le de
-                    </button>
-                  )}
-                </section>
-              )}
+              {game.pendingCellRoll && !showTrapIntro && !showTreasureIntro && !game.trapFeedback && (() => {
+                const ck = game.pendingCellRoll!.kind;
+                const isTrap = ck === 'trap' || ck === 'trap-advanced';
+                const eyebrow = ck === 'trap' ? 'Piège' : ck === 'trap-advanced' ? 'Piège avancé' : ck === 'treasure-advanced' ? 'Trésor avancé' : 'Trésor';
+                return (
+                  <section className={`resolution-panel${isTrap ? ' trap-resolution' : ''}`} aria-label="Resolution en attente">
+                    <p className="eyebrow">{eyebrow}</p>
+                    <p className="muted">Lance le dé pour révéler le résultat avant d'appliquer son effet.</p>
+                    {isTrap && <TrapReferenceCard />}
+                    {(ck === 'treasure' || ck === 'treasure-advanced') && <TreasureReferenceCard />}
+                    {rollingCellDie ? (
+                      <RollingDie onSettle={() => {
+                        setRollingCellDie(false);
+                        setGame((g) => g ? rollPendingCellResolution(g) : g);
+                      }} />
+                    ) : (
+                      <button className="action-pulse" onClick={() => setRollingCellDie(true)}>
+                        Lancer le dé
+                      </button>
+                    )}
+                  </section>
+                );
+              })()}
               {game.pendingTrapLevelDiscard && showTrapLevelIntro && (
                 <section className="resolution-panel trap-resolution trap-level-intro" aria-live="assertive">
                   <p className="eyebrow">Piège niveau {game.pendingTrapLevelDiscard.level}</p>
@@ -1064,6 +1126,52 @@ export function App() {
         </div>
       )}
 
+      {showCombatIntro && (
+        <div className="combat-intro-overlay" aria-live="assertive" role="alert">
+          <div className="combat-intro-card">
+            <span className="combat-intro-icon" aria-hidden="true">⚔</span>
+            <p className="combat-intro-title">Combat !</p>
+            <p className="combat-intro-sub">Résolution en cours…</p>
+          </div>
+        </div>
+      )}
+
+      {showTreasureIntro && (
+        <div className="treasure-intro-overlay" aria-live="assertive" role="alert">
+          <div className="treasure-intro-card">
+            <span className="treasure-intro-icon" aria-hidden="true">✦</span>
+            <p className="treasure-intro-title">Trésor !</p>
+            <p className="treasure-intro-sub">Résolution en cours…</p>
+          </div>
+        </div>
+      )}
+
+      {showBlockedMovement && game?.blockedMovementFeedback && (
+        <div className="blocked-movement-overlay" aria-live="assertive" role="alert">
+          <div className="blocked-movement-card">
+            <div className="blocked-movement-dice" aria-hidden="true">
+              <span>{game.blockedMovementFeedback.dice[0]}</span>
+              <span>{game.blockedMovementFeedback.dice[1]}</span>
+            </div>
+            <p className="blocked-movement-title">Bloqué !</p>
+            <p className="blocked-movement-sub">Aucune case accessible — séquence ignorée</p>
+          </div>
+        </div>
+      )}
+
+      {towerTransitionInfo && (
+        <div className={`tower-transition-overlay${towerTransitionInfo.isBoss ? ' is-boss' : ''}`} aria-live="assertive" role="alert">
+          <div className="tower-transition-band tower-transition-band--top" />
+          <div className="tower-transition-content">
+            <p className="tower-transition-eyebrow">
+              {towerTransitionInfo.isBoss ? 'Tour du Boss' : `Tour ${towerTransitionInfo.index} / ${towerTransitionInfo.total}`}
+            </p>
+            <p className="tower-transition-name">{towerTransitionInfo.name}</p>
+          </div>
+          <div className="tower-transition-band tower-transition-band--bottom" />
+        </div>
+      )}
+
       <section className="game-info-grid">
         <HandDock
           game={game}
@@ -1078,10 +1186,29 @@ export function App() {
               : undefined
           }
           unaffordableCardIds={unplayableCardIds}
+          canDiscardForMana={
+            game.manaJustRolled &&
+            game.mana !== null &&
+            game.mana < 6 &&
+            !!(game.activeCombat || game.activeBossCombat)
+          }
         />
 
         {showLog && (
-          <LogOverlay game={game} onClose={() => setShowLog(false)} onNewGame={startNewGame} />
+          <LogOverlay game={game} onClose={() => setShowLog(false)} />
+        )}
+
+        {showMainMenu && (
+          <MainMenuOverlay
+            onClose={() => setShowMainMenu(false)}
+            onOpenBestiary={() => setShowBestiary(true)}
+            onOpenLog={() => setShowLog(true)}
+            onOpenTowerStack={() => setShowTowerStack(true)}
+            onNewGame={startNewGame}
+          />
+        )}
+        {showBestiary && (
+          <BestiaryOverlay onClose={() => setShowBestiary(false)} />
         )}
       </section>
 
@@ -1104,7 +1231,7 @@ export function App() {
         discardDisabled={inspectedHandIndex === null || Boolean(getDiscardForManaDisabledReason(game, inspectedHandIndex ?? 0))}
         flippedCards={game.flippedCards}
         onClose={closeInspect}
-        onDiscardForMana={game.activeCombat && inspectedHandIndex !== null ? discardInspectedCardForMana : undefined}
+        onDiscardForMana={(game.activeCombat || game.activeBossCombat) && inspectedHandIndex !== null ? discardInspectedCardForMana : undefined}
         onPlay={game.activeCombat && inspectedHandIndex !== null ? () => playCardFromHand(inspectedCard!.id) : undefined}
         onUpgrade={(cardId) => setGame(upgradeCard(game, cardId))}
         playDisabledReason={(() => {

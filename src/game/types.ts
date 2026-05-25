@@ -228,6 +228,7 @@ export type GameState = {
   playerFeedback: PlayerFeedback | null;
   trapFeedback: TrapFeedback | null;
   treasureFeedback: TreasureFeedback | null;
+  blockedMovementFeedback: { dice: [number, number] } | null;
   flippedCards: string[];
   banishableCardId: string | null;
   pendingHasteAttack: number | null;

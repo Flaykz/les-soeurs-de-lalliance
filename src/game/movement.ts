@@ -16,14 +16,16 @@ export function rollMovementDice(state: GameState): GameState {
     selectedMovement: null,
     pendingMovementPaths: [],
     selectedMovementPathIndex: null,
+    blockedMovementFeedback: null,
     phase: 'choose-destination'
   };
 
   if (getMovementOptions(nextState).length === 0) {
-    return addLog(
-      { ...nextState, movementDice: null, pendingMovementPaths: [], selectedMovementPathIndex: null, phase: 'movement-roll' },
-      `Des de deplacement : ${movementDice[0]} et ${movementDice[1]}. Aucune destination exacte non visitee possible, relance les des.`
+    const blockedState = addLog(
+      { ...nextState, movementDice: null, pendingMovementPaths: [], selectedMovementPathIndex: null, blockedMovementFeedback: { dice: movementDice } },
+      `Des de deplacement : ${movementDice[0]} et ${movementDice[1]}. Aucune destination possible, deplacement ignore (regle : arret immediat).`
     );
+    return resolveCrossedCells(blockedState, []);
   }
 
   return addLog(nextState, `Des de deplacement : ${movementDice[0]} et ${movementDice[1]}. Choisis une destination atteignable.`);

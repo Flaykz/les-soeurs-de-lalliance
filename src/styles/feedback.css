@@ -204,6 +204,160 @@
   text-transform: uppercase;
 }
 
+/* ── Overlay d'annonce de combat ──────────────────────────────── */
+
+.combat-intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.72);
+  animation: trapOverlayFade 1.5s ease both;
+  pointer-events: none;
+}
+
+.combat-intro-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  border: 2px solid rgba(239, 68, 68, 0.55);
+  border-radius: 26px;
+  padding: 38px 64px;
+  background: rgba(18, 18, 20, 0.97);
+  box-shadow: 0 0 80px rgba(239, 68, 68, 0.18), 0 32px 72px rgba(0, 0, 0, 0.48);
+  animation: trapCardReveal 1.5s ease both;
+}
+
+.combat-intro-icon {
+  font-size: 3.6rem;
+  color: #ef4444;
+  animation: trapIconWobble 1.5s ease both;
+}
+
+.combat-intro-title {
+  margin: 0;
+  font-size: 2.4rem;
+  font-weight: 1000;
+  color: #ef4444;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.combat-intro-sub {
+  margin: 0;
+  color: #a3a3a3;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── Overlay d'annonce de trésor ──────────────────────────────── */
+
+.treasure-intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.72);
+  animation: trapOverlayFade 1.5s ease both;
+  pointer-events: none;
+}
+
+.treasure-intro-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  border: 2px solid rgba(245, 158, 11, 0.55);
+  border-radius: 26px;
+  padding: 38px 64px;
+  background: rgba(18, 18, 20, 0.97);
+  box-shadow: 0 0 80px rgba(245, 158, 11, 0.18), 0 32px 72px rgba(0, 0, 0, 0.48);
+  animation: trapCardReveal 1.5s ease both;
+}
+
+.treasure-intro-icon {
+  font-size: 3.6rem;
+  color: #f59e0b;
+  animation: trapIconWobble 1.5s ease both;
+}
+
+.treasure-intro-title {
+  margin: 0;
+  font-size: 2.4rem;
+  font-weight: 1000;
+  color: #f59e0b;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.treasure-intro-sub {
+  margin: 0;
+  color: #a3a3a3;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── Overlay déplacement bloqué ─────────────────────────────── */
+
+.blocked-movement-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  animation: trapOverlayFade 1.8s ease both;
+  pointer-events: none;
+}
+
+.blocked-movement-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  border: 2px solid rgba(100, 116, 139, 0.55);
+  border-radius: 26px;
+  padding: 38px 64px;
+  background: rgba(18, 18, 20, 0.97);
+  box-shadow: 0 0 60px rgba(100, 116, 139, 0.15), 0 32px 72px rgba(0, 0, 0, 0.48);
+  animation: trapCardReveal 1.8s ease both;
+}
+
+.blocked-movement-dice {
+  display: flex;
+  gap: 12px;
+  font-size: 2.4rem;
+}
+
+.blocked-movement-title {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 1000;
+  color: #94a3b8;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.blocked-movement-sub {
+  margin: 0;
+  color: #71717a;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
 /* ── Feedback résultat du piège ──────────────────────────────── */
 
 .trap-feedback-panel {
@@ -590,4 +744,91 @@
   font-size: 0.82rem;
   font-weight: 700;
   color: #facc15;
+}
+
+/* ── Transition de tour (style STS) ─────────────────────────── */
+
+.tower-transition-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  pointer-events: none;
+  --band-color: rgba(20, 22, 30, 0.97);
+  --accent: #a78bfa;
+  --accent-glow: rgba(167, 139, 250, 0.35);
+}
+
+.tower-transition-overlay.is-boss {
+  --accent: #ef4444;
+  --accent-glow: rgba(239, 68, 68, 0.35);
+}
+
+.tower-transition-band {
+  flex: 1;
+  background: var(--band-color);
+  border-color: var(--accent);
+}
+
+.tower-transition-band--top {
+  animation: towerBandTop 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  border-bottom: 2px solid var(--accent);
+  box-shadow: 0 4px 32px var(--accent-glow);
+}
+
+.tower-transition-band--bottom {
+  animation: towerBandBottom 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  border-top: 2px solid var(--accent);
+  box-shadow: 0 -4px 32px var(--accent-glow);
+}
+
+.tower-transition-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 18px 32px;
+  background: var(--band-color);
+  animation: towerContentReveal 0.5s 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tower-transition-eyebrow {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0.9;
+}
+
+.tower-transition-name {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 1000;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f4f4f5;
+  text-shadow: 0 0 40px var(--accent-glow);
+}
+
+@keyframes towerBandTop {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes towerBandBottom {
+  0%   { transform: translateY(100%); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes towerContentReveal {
+  0%   { opacity: 0; transform: scaleX(0.88); }
+  60%  { opacity: 1; transform: scaleX(1.02); }
+  100% { transform: scaleX(1); }
 }

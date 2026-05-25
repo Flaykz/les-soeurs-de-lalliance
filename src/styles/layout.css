@@ -4,6 +4,31 @@
   padding: 24px 0;
 }
 
+.boss-selection-topbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 0 4px;
+}
+
+.main-menu-trigger {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  font-size: 1.3rem;
+  color: #f5f5f5;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.main-menu-trigger:hover,
+.main-menu-trigger:active {
+  background: rgba(255, 255, 255, 0.16);
+}
+
 .game-shell {
   width: min(1440px, calc(100% - 24px));
   padding-top: 76px;

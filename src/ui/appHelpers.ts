@@ -10,7 +10,7 @@ export function getBuyActionDisabledReason(game: GameState): string | null {
   if (game.combatFeedback || game.bossCombatFeedback) return 'Resolution de combat en cours.';
   const phase = game.activeCombat?.phase ?? game.activeBossCombat?.phase;
   if (phase !== 'player') return 'Achat possible pendant la phase joueuse.';
-  if (game.mana === null) return 'Lance d’abord le de de mana.';
+  if (game.mana === null) return "Lance d'abord le dé de mana.";
   if (game.mana < 1) return 'Mana insuffisante.';
   if (game.hand.length >= 5) return 'Main pleine.';
   if (game.deck.length === 0 && game.discard.length > 0) return 'Deck action en cours de remelange.';
@@ -19,12 +19,16 @@ export function getBuyActionDisabledReason(game: GameState): string | null {
 }
 
 export function getDiscardForManaDisabledReason(game: GameState, handIndex: number): string | null {
-  if (!game.activeCombat) return 'Aucun combat actif.';
-  if (game.combatFeedback) return 'resolution de combat en cours.';
-  if (game.activeCombat.phase !== 'player') return 'possible pendant la phase joueuse.';
-  if (game.mana === null) return 'lance d’abord le de de mana.';
-  if (game.mana >= 6) return 'mana deja au maximum 6.';
-  if (!game.hand[handIndex]) return 'aucune carte selectionnee.';
+  const inCombat = game.activeCombat || game.activeBossCombat;
+  if (!inCombat) return 'Aucun combat actif.';
+  const feedback = game.combatFeedback || game.bossCombatFeedback;
+  if (feedback) return 'Résolution de combat en cours.';
+  const phase = game.activeCombat?.phase ?? game.activeBossCombat?.phase;
+  if (phase !== 'player') return 'Possible pendant la phase joueuse.';
+  if (game.mana === null) return 'Lance d\'abord le dé de mana.';
+  if (!game.manaJustRolled) return 'Seulement au début du round, juste après le lancer de mana.';
+  if (game.mana >= 6) return 'Mana déjà au maximum (6).';
+  if (!game.hand[handIndex]) return 'Aucune carte sélectionnée.';
   return null;
 }
 

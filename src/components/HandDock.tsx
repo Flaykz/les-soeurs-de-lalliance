@@ -7,13 +7,14 @@ const FAN_ANGLE = 3;
 const PLAY_THRESHOLD = 100;
 const VISUAL_DRAG_THRESHOLD = 8;
 
-export function HandDock({ game, onPlayCard, onInspectCard, onDiscardForTrap, unaffordableCardIds = new Set(), trapDiscardAnimCardId }: {
+export function HandDock({ game, onPlayCard, onInspectCard, onDiscardForTrap, unaffordableCardIds = new Set(), trapDiscardAnimCardId, canDiscardForMana = false }: {
   game: GameState;
   onPlayCard: (cardId: string) => void;
   onInspectCard: (card: ActionCard, handIndex: number) => void;
   onDiscardForTrap?: (cardId: string, handIndex: number) => void;
   unaffordableCardIds?: Set<string>;
   trapDiscardAnimCardId?: string;
+  canDiscardForMana?: boolean;
 }) {
   const [dragState, setDragState] = useState<{ cardId: string; startY: number; currentY: number } | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -83,6 +84,7 @@ export function HandDock({ game, onPlayCard, onInspectCard, onDiscardForTrap, un
             card.kind,
             isUnaffordable ? 'unaffordable' : '',
             trapMode ? 'discard-ready' : '',
+            (!trapMode && canDiscardForMana) ? 'mana-discard-ready' : '',
             isTrapDiscard ? 'trap-discard-anim' : '',
           ].filter(Boolean).join(' ');
 
@@ -107,6 +109,9 @@ export function HandDock({ game, onPlayCard, onInspectCard, onDiscardForTrap, un
               <ActionCardContent card={card} isLevel2={game.flippedCards.includes(cardId)} />
               {trapMode && (
                 <span className="discard-ready-badge" aria-hidden="true">↓</span>
+              )}
+              {!trapMode && canDiscardForMana && (
+                <span className="mana-discard-ready-badge" aria-hidden="true">◆</span>
               )}
             </button>
           );
