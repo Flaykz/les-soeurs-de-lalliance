@@ -16,6 +16,7 @@ interface BossSelectionProps {
 
 export function BossSelection({ animationSpeed, onAnimationSpeedChange, onStartGame }: BossSelectionProps) {
   const [showDataEntry, setShowDataEntry] = useState(false);
+  const [useLocations, setUseLocations] = useState(false);
   const baseActionCards = baseActions.filter((card) => card.kind === 'action');
   const advancedActionCards = baseActions.filter((card) => card.kind === 'advanced-action');
   const normalTowers = towerDefinitions.filter((tower) => !tower.id.startsWith('boss-tower-'));
@@ -32,6 +33,12 @@ export function BossSelection({ animationSpeed, onAnimationSpeedChange, onStartG
             {animationSpeeds.map((speed) => <option key={speed.value} value={speed.value}>{speed.label}</option>)}
           </select>
         </div>
+        <div className="game-option-row">
+          <label>
+            <input type="checkbox" checked={useLocations} onChange={(e) => setUseLocations(e.target.checked)} />
+            {' '}Jouer avec les lieux (non implémenté — désactivé recommandé)
+          </label>
+        </div>
       </section>
 
       <section className="boss-selection" aria-label="Choix du boss">
@@ -39,7 +46,7 @@ export function BossSelection({ animationSpeed, onAnimationSpeedChange, onStartG
           <BossCardTile
             boss={boss}
             key={boss.id}
-            onStart={(id) => onStartGame(createInitialGameState(id))}
+            onStart={(id) => onStartGame(createInitialGameState(id, { useLocations }))}
           />
         ))}
       </section>

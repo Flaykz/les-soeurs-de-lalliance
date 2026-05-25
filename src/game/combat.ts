@@ -5,7 +5,8 @@ import { drawActionCards } from './cards';
 import { applyDamageToHealth, recoverHealth } from './health';
 import { addLog, rollDie } from './utils';
 
-function hasTrait(enemyId: string, trait: string): boolean {
+function hasTrait(enemyId: string, trait: string, suppressedTraits?: string[]): boolean {
+  if (suppressedTraits?.some((t) => t.toLowerCase() === trait.toLowerCase())) return false;
   const enemy = getEnemy(enemyId);
   return enemy?.traits?.some((t) => t.toLowerCase() === trait.toLowerCase()) ?? false;
 }
@@ -13,9 +14,9 @@ function hasTrait(enemyId: string, trait: string): boolean {
 function isValidCombatTarget(combat: ActiveCombat, targetInstanceId: string): boolean {
   const target = combat.enemies.find((e) => e.instanceId === targetInstanceId);
   if (!target || target.enemyHealth <= 0) return false;
-  if (!hasTrait(target.enemyId, 'caché')) return true;
+  if (!hasTrait(target.enemyId, 'caché', target.suppressedTraits)) return true;
   return !combat.enemies.some(
-    (e) => e.instanceId !== targetInstanceId && e.enemyHealth > 0 && !hasTrait(e.enemyId, 'caché')
+    (e) => e.instanceId !== targetInstanceId && e.enemyHealth > 0 && !hasTrait(e.enemyId, 'caché', e.suppressedTraits)
   );
 }
 
@@ -40,7 +41,7 @@ export function rollMana(state: GameState): GameState {
   let nextState: GameState = { ...state, mana, manaJustRolled: true, activeCombat: { ...state.activeCombat, phase: 'player' } };
 
   if (state.activeCombat.round === 1) {
-    const hasteEnemies = state.activeCombat.enemies.filter((e) => e.enemyHealth > 0 && hasTrait(e.enemyId, 'hâte'));
+    const hasteEnemies = state.activeCombat.enemies.filter((e) => e.enemyHealth > 0 && hasTrait(e.enemyId, 'hâte', e.suppressedTraits));
     if (hasteEnemies.length > 0) {
       const hateDamage = hasteEnemies.reduce((sum, e) => sum + e.resolvedAttack, 0);
       return addLog(
@@ -91,6 +92,10 @@ export function playActionCard(state: GameState, cardId: string, targetInstanceI
 
   if (state.activeCombat.phase !== 'player') {
     return addLog(state, 'Les cartes ne peuvent etre jouees que pendant la phase joueuse.');
+  }
+
+  if (state.pendingEnemyReroll || state.pendingKeywordCancel || state.pendingRemoveFromCombat) {
+    return addLog(state, 'Resolvez d abord l effet en attente avant de jouer une autre carte.');
   }
 
   const card = getAction(cardId);
@@ -148,6 +153,10 @@ export function endPlayerPhase(state: GameState): GameState {
     return addLog(state, 'La phase joueuse ne peut etre terminee qu apres le lancer de mana.');
   }
 
+  if (state.pendingEnemyReroll || state.pendingKeywordCancel || state.pendingRemoveFromCombat) {
+    return addLog(state, 'Resolvez d abord l effet en attente avant de terminer la phase.');
+  }
+
   return addLog(
     { ...state, banishableCardId: null, activeCombat: { ...state.activeCombat, phase: 'enemy' } },
     'Phase joueuse terminee. Resous maintenant l attaque ennemie.'
@@ -172,9 +181,9 @@ export function endCombatRound(state: GameState): GameState {
 
   const incomingDamage = state.activeCombat.enemies.reduce((total, combatEnemy) => {
     if (combatEnemy.enemyHealth <= 0) return total;
-    if (isHasteRound1 && hasTrait(combatEnemy.enemyId, 'hâte')) return total;
+    if (isHasteRound1 && hasTrait(combatEnemy.enemyId, 'hâte', combatEnemy.suppressedTraits)) return total;
     const atk = combatEnemy.resolvedAttack;
-    return total + (noDefense && hasTrait(combatEnemy.enemyId, 'rage') ? atk * 2 : atk);
+    return total + (noDefense && hasTrait(combatEnemy.enemyId, 'rage', combatEnemy.suppressedTraits) ? atk * 2 : atk);
   }, 0);
 
   const blocked = state.activeCombat.defense;
@@ -183,7 +192,7 @@ export function endCombatRound(state: GameState): GameState {
   const playerFeedback = { incomingDamage, blocked, net };
 
   let rageNote = '';
-  if (noDefense && state.activeCombat.enemies.some((e) => e.enemyHealth > 0 && hasTrait(e.enemyId, 'rage'))) {
+  if (noDefense && state.activeCombat.enemies.some((e) => e.enemyHealth > 0 && hasTrait(e.enemyId, 'rage', e.suppressedTraits))) {
     rageNote = ' (Rage : attaque doublée)';
   }
 
@@ -198,7 +207,7 @@ export function endCombatRound(state: GameState): GameState {
 
   if (net > 0 && nextState.phase !== 'game-over') {
     const fbEnemies = state.activeCombat.enemies.filter(
-      (e) => e.enemyHealth > 0 && hasTrait(e.enemyId, 'force brutale')
+      (e) => e.enemyHealth > 0 && hasTrait(e.enemyId, 'force brutale', e.suppressedTraits)
     );
     for (const _ of fbEnemies) {
       if (nextState.hand.length > 0) {
@@ -281,6 +290,21 @@ function applyActionEffects(state: GameState, face: CardFaceData, targetInstance
           'Carte defaussee au hasard.'
         );
       }
+    } else if (effect.kind === 'reroll-enemy-die') {
+      nextState = addLog(
+        { ...nextState, pendingEnemyReroll: { remainingRerolls: effect.maxRerolls } },
+        `Choisissez un de ennemi a relancer (${effect.maxRerolls} relance(s)).`
+      );
+    } else if (effect.kind === 'cancel-enemy-keyword') {
+      nextState = addLog(
+        { ...nextState, pendingKeywordCancel: true },
+        "Choisissez un ennemi dont annuler le mot-cle."
+      );
+    } else if (effect.kind === 'remove-from-combat') {
+      nextState = addLog(
+        { ...nextState, pendingRemoveFromCombat: true },
+        "Choisissez un ennemi (avec mot-cle) a retirer du combat."
+      );
     }
   }
 
@@ -319,7 +343,7 @@ function applyActionDamage(state: GameState, damage: number, targetInstanceId: s
 
   const enemyHealth = Math.max(0, target.enemyHealth - damage);
   const willBeDefeated = enemyHealth <= 0;
-  const hasCoriace = hasTrait(target.enemyId, 'coriace');
+  const hasCoriace = hasTrait(target.enemyId, 'coriace', target.suppressedTraits);
 
   if (willBeDefeated && hasCoriace && !target.coriaceRevived) {
     const revivedAttack = target.resolvedAttack + 1;
@@ -364,6 +388,76 @@ function applyActionDamage(state: GameState, damage: number, targetInstanceId: s
     if (remainingEnemyCount === 0) {
       nextState = addLog(nextState, 'Plus aucun ennemi en jeu : le combat est termine.');
     }
+  }
+
+  return nextState;
+}
+
+export function resolveEnemyDieReroll(state: GameState, instanceId: string, dieType: 'attack' | 'health'): GameState {
+  if (!state.activeCombat || !state.pendingEnemyReroll) return state;
+
+  const enemy = state.activeCombat.enemies.find((e) => e.instanceId === instanceId);
+  if (!enemy) return addLog(state, 'Ennemi introuvable.');
+
+  if (dieType === 'attack' && !enemy.attackWasRolled) {
+    return addLog(state, 'Cet ennemi n a pas de de Attaque a relancer.');
+  }
+  if (dieType === 'health' && !enemy.healthWasRolled) {
+    return addLog(state, 'Cet ennemi n a pas de de Resistance a relancer.');
+  }
+
+  const newValue = rollDie();
+  const updatedEnemies = state.activeCombat.enemies.map((e) => {
+    if (e.instanceId !== instanceId) return e;
+    return dieType === 'attack' ? { ...e, resolvedAttack: newValue } : { ...e, enemyHealth: newValue };
+  });
+
+  const { remainingRerolls } = state.pendingEnemyReroll;
+  const nextReroll = remainingRerolls - 1 > 0 ? { remainingRerolls: remainingRerolls - 1 } : null;
+
+  return addLog(
+    { ...state, activeCombat: { ...state.activeCombat, enemies: updatedEnemies }, pendingEnemyReroll: nextReroll },
+    `De ${dieType === 'attack' ? 'Attaque' : 'Resistance'} relance : ${newValue}.${nextReroll ? ` ${nextReroll.remainingRerolls} relance(s) restante(s).` : ''}`
+  );
+}
+
+export function resolveKeywordCancel(state: GameState, instanceId: string, trait: string): GameState {
+  if (!state.activeCombat || !state.pendingKeywordCancel) return state;
+
+  const enemy = state.activeCombat.enemies.find((e) => e.instanceId === instanceId);
+  if (!enemy) return addLog(state, 'Ennemi introuvable.');
+
+  const updatedEnemies = state.activeCombat.enemies.map((e) =>
+    e.instanceId === instanceId
+      ? { ...e, suppressedTraits: [...(e.suppressedTraits ?? []), trait] }
+      : e
+  );
+
+  return addLog(
+    { ...state, activeCombat: { ...state.activeCombat, enemies: updatedEnemies }, pendingKeywordCancel: false },
+    `Mot-cle "${trait}" annule pour cet ennemi.`
+  );
+}
+
+export function resolveRemoveFromCombat(state: GameState, instanceId: string): GameState {
+  if (!state.activeCombat || !state.pendingRemoveFromCombat) return state;
+
+  const updatedEnemies = state.activeCombat.enemies.filter((e) => e.instanceId !== instanceId);
+  const remainingCount = updatedEnemies.filter((e) => e.enemyHealth > 0).length;
+
+  let nextState: GameState = addLog(
+    { ...state, activeCombat: { ...state.activeCombat, enemies: updatedEnemies }, pendingRemoveFromCombat: false },
+    'Ennemi retire du combat (sans XP).'
+  );
+
+  if (remainingCount === 0) {
+    nextState = continuePendingResolution({
+      ...nextState,
+      activeCombat: null,
+      combatFeedback: null,
+      mana: null,
+      banishableCardId: null
+    });
   }
 
   return nextState;

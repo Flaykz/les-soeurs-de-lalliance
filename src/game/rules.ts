@@ -8,8 +8,9 @@ import { shuffle } from './utils';
 
 export const ADVANCED_ACTION_XP_COST = 2;
 
-export function createInitialGameState(bossId: string): GameState {
-  const deck = shuffle(createActionDeck());
+export function createInitialGameState(bossId: string, options: { useLocations?: boolean } = {}): GameState {
+  const { useLocations = false } = options;
+  const deck = shuffle(createActionDeck(useLocations));
   const advancedDeck = shuffle(baseActions.filter((card) => card.kind === 'advanced-action').map((card) => card.id));
   const boss = getBoss(bossId) ?? baseBosses[0];
   const towerIds = createTowerSequence(boss);
@@ -56,6 +57,10 @@ export function createInitialGameState(bossId: string): GameState {
     banishableCardId: null,
     pendingHasteAttack: null,
     manaJustRolled: false,
+    useLocations,
+    pendingEnemyReroll: null,
+    pendingKeywordCancel: false,
+    pendingRemoveFromCombat: false,
     log: [`Boss choisi : ${boss.name}. Deck action melange, main de depart piochee. ${tower.name} commence.`]
   });
 }

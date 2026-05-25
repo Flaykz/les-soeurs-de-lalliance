@@ -63,7 +63,10 @@ import {
   rollPendingCellResolution,
   upgradeCard,
   canUpgradeCard,
-  usePotion
+  usePotion,
+  resolveEnemyDieReroll,
+  resolveKeywordCancel,
+  resolveRemoveFromCombat,
 } from './game/rules';
 import type { ActionCard, GameState } from './game/types';
 import { animationDurations, defaultAnimationSpeed, isAnimationSpeed, type AnimationSpeed } from './ui/animationConfig';
@@ -94,6 +97,7 @@ export function App() {
   const [selectedBossDieIndex, setSelectedBossDieIndex] = useState<number | null>(null);
   const [inspectedHandIndex, setInspectedHandIndex] = useState<number | null>(null);
   const [combatMessage, setCombatMessage] = useState<string | null>(null);
+  const [pendingKeywordCancelEnemyId, setPendingKeywordCancelEnemyId] = useState<string | null>(null);
   const [inspectedCard, setInspectedCard] = useState<ActionCard | null>(null);
   const [movementAnim, setMovementAnim] = useState<{ pathCellIds: string[]; step: number; pendingGame: GameState } | null>(null);
   const [showTrapIntro, setShowTrapIntro] = useState(false);
@@ -160,6 +164,10 @@ export function App() {
       setSelectedEnemyInstanceId(null);
     }
   }, [game?.activeCombat, selectedEnemyInstanceId]);
+
+  useEffect(() => {
+    if (!game?.pendingKeywordCancel) setPendingKeywordCancelEnemyId(null);
+  }, [game?.pendingKeywordCancel]);
 
   useEffect(() => {
     if (!game?.combatFeedback) return;
@@ -311,7 +319,10 @@ export function App() {
   const topActionCard = game.deck[0] ? getAction(game.deck[0]) ?? null : null;
   const topAdvancedCards = game.advancedDecks.map((deck) => deck[0] ? getAction(deck[0]) ?? null : null);
   const hasPendingHit = Boolean(game.activeCombat && game.activeCombat.pendingHits.length > 0 && !game.combatFeedback);
-  const canActInCombat = Boolean(game.activeCombat?.phase === 'player' && game.mana !== null && !game.combatFeedback && !hasPendingHit);
+  const canActInCombat = Boolean(
+    game.activeCombat?.phase === 'player' && game.mana !== null && !game.combatFeedback && !hasPendingHit
+    && !game.pendingEnemyReroll && !game.pendingKeywordCancel && !game.pendingRemoveFromCombat
+  );
   const canActInBossCombat = Boolean(game.activeBossCombat?.phase === 'player' && game.mana !== null && !game.bossCombatFeedback);
   const unplayableCardIds = new Set(
     canActInCombat
@@ -711,6 +722,101 @@ export function App() {
               />
               {hasPendingHit && game.activeCombat && (
                 <p className="status">Coup en attente : {game.activeCombat.pendingHits[0]} degats — selectionne une cible.</p>
+              )}
+              {game.activeCombat && game.pendingEnemyReroll && (
+                <div className="pending-interaction-panel">
+                  <p className="pending-interaction-title">Relancer un dé ennemi — {game.pendingEnemyReroll.remainingRerolls} relance(s) restante(s)</p>
+                  <div className="pending-interaction-grid">
+                    {game.activeCombat.enemies.filter((e) => e.enemyHealth > 0 && (e.attackWasRolled || e.healthWasRolled)).map((e) => (
+                      <div key={e.instanceId} className="pending-interaction-entry">
+                        <span className="pending-entry-label">{e.enemyId}</span>
+                        {e.attackWasRolled && (
+                          <button className="secondary-button" onClick={() => setGame(resolveEnemyDieReroll(game, e.instanceId, 'attack'))}>
+                            Attaque ({e.resolvedAttack}) ↺
+                          </button>
+                        )}
+                        {e.healthWasRolled && (
+                          <button className="secondary-button" onClick={() => setGame(resolveEnemyDieReroll(game, e.instanceId, 'health'))}>
+                            Résistance ({e.enemyHealth} PV) ↺
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {game.activeCombat.enemies.filter((e) => e.enemyHealth > 0 && (e.attackWasRolled || e.healthWasRolled)).length === 0 && (
+                      <p className="pending-interaction-empty">Aucun dé à relancer (aucun ennemi avec valeur aléatoire).</p>
+                    )}
+                  </div>
+                </div>
+              )}
+              {game.activeCombat && game.pendingKeywordCancel && (
+                <div className="pending-interaction-panel">
+                  {pendingKeywordCancelEnemyId === null ? (
+                    <>
+                      <p className="pending-interaction-title">Annuler un mot-clé — Choisissez un ennemi</p>
+                      <div className="pending-interaction-grid">
+                        {game.activeCombat.enemies
+                          .filter((e) => {
+                            if (e.enemyHealth <= 0) return false;
+                            const card = getEnemy(e.enemyId);
+                            return (card?.traits ?? []).some(
+                              (t) => !(e.suppressedTraits ?? []).some((s) => s.toLowerCase() === t.toLowerCase())
+                            );
+                          })
+                          .map((e) => (
+                            <button key={e.instanceId} className="secondary-button" onClick={() => setPendingKeywordCancelEnemyId(e.instanceId)}>
+                              {e.enemyId}
+                            </button>
+                          ))}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="pending-interaction-title">Annuler un mot-clé — Choisissez le trait</p>
+                      <div className="pending-interaction-grid">
+                        {(() => {
+                          const e = game.activeCombat!.enemies.find((en) => en.instanceId === pendingKeywordCancelEnemyId);
+                          const card = e ? getEnemy(e.enemyId) : null;
+                          const activeTraits = (card?.traits ?? []).filter(
+                            (t) => !(e?.suppressedTraits ?? []).some((s) => s.toLowerCase() === t.toLowerCase())
+                          );
+                          return activeTraits.map((trait) => (
+                            <button
+                              key={trait}
+                              className="secondary-button"
+                              onClick={() => {
+                                setGame(resolveKeywordCancel(game, pendingKeywordCancelEnemyId, trait));
+                                setPendingKeywordCancelEnemyId(null);
+                              }}
+                            >
+                              {trait}
+                            </button>
+                          ));
+                        })()}
+                      </div>
+                      <button className="ghost-button" onClick={() => setPendingKeywordCancelEnemyId(null)}>← Retour</button>
+                    </>
+                  )}
+                </div>
+              )}
+              {game.activeCombat && game.pendingRemoveFromCombat && (
+                <div className="pending-interaction-panel">
+                  <p className="pending-interaction-title">Retirer du combat — Choisissez un ennemi avec mot-clé</p>
+                  <div className="pending-interaction-grid">
+                    {game.activeCombat.enemies
+                      .filter((e) => {
+                        if (e.enemyHealth <= 0) return false;
+                        const card = getEnemy(e.enemyId);
+                        return (card?.traits ?? []).some(
+                          (t) => !(e.suppressedTraits ?? []).some((s) => s.toLowerCase() === t.toLowerCase())
+                        );
+                      })
+                      .map((e) => (
+                        <button key={e.instanceId} className="secondary-button" onClick={() => setGame(resolveRemoveFromCombat(game, e.instanceId))}>
+                          {e.enemyId}
+                        </button>
+                      ))}
+                  </div>
+                </div>
               )}
               {combatMessage && <p className="status danger">{combatMessage}</p>}
             </>

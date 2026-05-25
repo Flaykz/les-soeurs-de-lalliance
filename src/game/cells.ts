@@ -92,7 +92,9 @@ export function continuePendingResolution(state: GameState): GameState {
         instanceId: `${enemyId}-${Date.now()}-${index}`,
         enemyId,
         enemyHealth: h === '?' ? rollDie() : (h === null || h === undefined) ? 1 : h,
-        resolvedAttack: atk === '?' ? rollDie() : (atk === null || atk === undefined) ? 0 : atk
+        resolvedAttack: atk === '?' ? rollDie() : (atk === null || atk === undefined) ? 0 : atk,
+        attackWasRolled: atk === '?',
+        healthWasRolled: h === '?',
       };
     });
     const questionRolls = resolvedEnemies

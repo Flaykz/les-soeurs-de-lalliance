@@ -31,11 +31,11 @@ export function upgradeCard(state: GameState, cardId: string): GameState {
   );
 }
 
-const ACTION_DECK_SIZE = 16;
-
-export function createActionDeck(): string[] {
-  const actionIds = baseActions.filter((card) => card.kind === 'action').map((card) => card.id);
-  return Array.from({ length: ACTION_DECK_SIZE }, (_, index) => actionIds[index % actionIds.length]);
+export function createActionDeck(useLocations = true): string[] {
+  const actionIds = baseActions
+    .filter((card) => card.kind === 'action' && (useLocations || !card.requiresLocations))
+    .map((card) => card.id);
+  return actionIds.map((id) => id);
 }
 
 export function refillActionDeckIfEmpty(state: GameState): GameState {

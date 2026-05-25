@@ -16,7 +16,10 @@ export type ActionEffect =
   | { kind: 'mana'; value: number }
   | { kind: 'reroll-mana' }
   | { kind: 'self-damage'; value: number }
-  | { kind: 'discard-random' };
+  | { kind: 'discard-random' }
+  | { kind: 'reroll-enemy-die'; maxRerolls: number }
+  | { kind: 'cancel-enemy-keyword' }
+  | { kind: 'remove-from-combat' };
 
 export type CardFaceData = {
   manaCost: number | null;
@@ -32,6 +35,7 @@ export type ActionCard = Omit<BaseCard, 'name'> & {
   traits?: string[];
   notes?: string;
   level2?: CardFaceData;
+  requiresLocations?: true;
 };
 
 export type BossCard = BaseCard & {
@@ -102,6 +106,9 @@ export type CombatEnemy = {
   enemyHealth: number;
   resolvedAttack: number;
   coriaceRevived?: boolean;
+  attackWasRolled?: boolean;
+  healthWasRolled?: boolean;
+  suppressedTraits?: string[];
 };
 
 export type CombatPhase = 'roll-mana' | 'player' | 'enemy' | 'haste';
@@ -224,5 +231,9 @@ export type GameState = {
   banishableCardId: string | null;
   pendingHasteAttack: number | null;
   manaJustRolled: boolean;
+  useLocations: boolean;
+  pendingEnemyReroll: { remainingRerolls: number } | null;
+  pendingKeywordCancel: boolean;
+  pendingRemoveFromCombat: boolean;
   log: string[];
 };

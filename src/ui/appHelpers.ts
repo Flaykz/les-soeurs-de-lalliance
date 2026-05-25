@@ -82,9 +82,16 @@ export function loadSavedGame(): GameState | null {
           enemyId: String(e.enemyId ?? ''),
           enemyHealth: Number(e.enemyHealth ?? 0),
           resolvedAttack: Number(e.resolvedAttack ?? 0),
-          coriaceRevived: e.coriaceRevived
+          coriaceRevived: e.coriaceRevived,
+          attackWasRolled: e.attackWasRolled,
+          healthWasRolled: e.healthWasRolled,
+          suppressedTraits: Array.isArray(e.suppressedTraits) ? e.suppressedTraits : undefined
         } satisfies CombatEnemy))
-      } : null
+      } : null,
+      useLocations: parsedGame.useLocations ?? false,
+      pendingEnemyReroll: parsedGame.pendingEnemyReroll ?? null,
+      pendingKeywordCancel: parsedGame.pendingKeywordCancel ?? false,
+      pendingRemoveFromCombat: parsedGame.pendingRemoveFromCombat ?? false,
     };
   } catch {
     localStorage.removeItem(STORAGE_KEY);
