@@ -164,6 +164,19 @@
   letter-spacing: 0.06em;
 }
 
+.card-inspect-level {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.82);
+  letter-spacing: -0.02em;
+  pointer-events: none;
+}
+
 .card-flip-btn {
   margin-left: auto;
   padding: 3px 10px;
@@ -203,8 +216,24 @@
   margin: 0;
 }
 
-.card-inspect-effects {
-  justify-content: flex-start;
+.card-inspect-illustration {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-inspect-tile.action .card-inspect-illustration {
+  background: linear-gradient(160deg, rgba(139, 105, 20, 0.18) 0%, rgba(0, 0, 0, 0.5) 100%);
+  border-color: rgba(139, 105, 20, 0.25);
+}
+
+.card-inspect-tile.advanced-action .card-inspect-illustration {
+  background: linear-gradient(160deg, rgba(45, 90, 39, 0.22) 0%, rgba(0, 0, 0, 0.5) 100%);
+  border-color: rgba(45, 90, 39, 0.3);
 }
 
 .card-inspect-notes {

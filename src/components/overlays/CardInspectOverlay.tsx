@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { resolveCardForDisplay } from '../../game/data-access';
 import type { ActionCard } from '../../game/types';
-import { deriveFaceLines, formatValue, getEffectDisplays } from '../../ui/formatters';
+import { deriveFaceLines, formatValue } from '../../ui/formatters';
 
 const UPGRADE_XP_COST = 1;
 
@@ -47,22 +47,14 @@ export function CardInspectOverlay({ card, flippedCards, xp, canUpgrade, onUpgra
             <span className="card-inspect-kind">
               {card.kind === 'advanced-action' ? 'Action avancée' : 'Action'}
             </span>
-            {canPreviewLevel2 && (
-              <button
-                aria-label={showingLevel2 ? 'Voir face actuelle' : 'Aperçu niveau 2'}
-                className="card-flip-btn"
-                onClick={() => setShowingLevel2((v) => !v)}
-                type="button"
-              >
-                {showingLevel2 ? '◀ Niv. 1' : 'Niv. 2 ▶'}
-              </button>
-            )}
           </div>
-          {(isFlipped || showingLevel2) && (
-            <span className="card-level-badge">
-              {showingLevel2 && !isFlipped ? 'Aperçu niv. 2' : 'Niv. 2'}
+          <div className="card-inspect-illustration" aria-hidden="true">
+            <span className="card-inspect-level">
+              {(isFlipped || showingLevel2)
+                ? (card.kind === 'advanced-action' ? 'A2' : '2')
+                : (card.kind === 'advanced-action' ? 'A1' : '1')}
             </span>
-          )}
+          </div>
           <ul className="card-inspect-lines">
             {deriveFaceLines(displayFace.effects, card.requiresLocations).map((line, i) => (
               <li key={i}>{line}</li>
@@ -71,13 +63,18 @@ export function CardInspectOverlay({ card, flippedCards, xp, canUpgrade, onUpgra
           {displayFace.traits && displayFace.traits.length > 0 && (
             <p className="card-inspect-traits">{displayFace.traits.join(' · ')}</p>
           )}
-          <div className="effect-row card-inspect-effects">
-            {getEffectDisplays(displayFace).map(({ label, kind }, i) => (
-              <span className={`effect-badge effect-${kind}`} key={i}>{label}</span>
-            ))}
-          </div>
         </div>
         <div className="card-inspect-actions">
+          {canPreviewLevel2 && (
+            <button
+              aria-label={showingLevel2 ? 'Voir face actuelle' : 'Aperçu niveau 2'}
+              className="secondary-button"
+              onClick={() => setShowingLevel2((v) => !v)}
+              type="button"
+            >
+              {showingLevel2 ? '◀ Niv. 1' : 'Niv. 2 ▶'}
+            </button>
+          )}
           {upgradeAvailable && onUpgrade && (
             <button
               className="primary-button"
@@ -86,11 +83,6 @@ export function CardInspectOverlay({ card, flippedCards, xp, canUpgrade, onUpgra
             >
               Améliorer — {upgradeCost} XP
             </button>
-          )}
-          {!isFlipped && card.level2 && !upgradeAvailable && (
-            <p className="card-inspect-upgrade-hint muted">
-              {isFlipped ? 'Déjà au niveau 2.' : `Amélioration : ${upgradeCost} XP (carte en main)`}
-            </p>
           )}
           {onDiscardForMana && (
             <button
