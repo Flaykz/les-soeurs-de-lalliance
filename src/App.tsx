@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { PWAPrompts } from './components/PWAPrompts';
 import { BossSelection } from './components/BossSelection';
 import { DieFace, RollingDie } from './components/DieFace';
 import { CardPeek, DiscardList } from './components/CardCatalog';
@@ -276,16 +277,19 @@ export function App() {
 
   if (!game) {
     return (
-      <BossSelection
-        animationSpeed={animationSpeed}
-        onAnimationSpeedChange={setAnimationSpeed}
-        onStartGame={(state) => {
-          setGame(state);
-          requestAnimationFrame(() => {
-            document.querySelector('.game-shell')?.scrollTo({ top: 0, behavior: 'instant' });
-          });
-        }}
-      />
+      <>
+        <PWAPrompts />
+        <BossSelection
+          animationSpeed={animationSpeed}
+          onAnimationSpeedChange={setAnimationSpeed}
+          onStartGame={(state) => {
+            setGame(state);
+            requestAnimationFrame(() => {
+              document.querySelector('.game-shell')?.scrollTo({ top: 0, behavior: 'instant' });
+            });
+          }}
+        />
+      </>
     );
   }
 
@@ -515,6 +519,8 @@ export function App() {
   const hasFloatingBar = false;
 
   return (
+    <>
+    <PWAPrompts />
     <main className={`shell game-shell${hasFloatingBar ? ' has-floating-bar' : ''}`} ref={shellRef} style={animationStyle}>
       <section className="status-bubbles" aria-label="Etat de partie">
         <span
@@ -976,5 +982,6 @@ export function App() {
         xp={game.xp}
       />
     </main>
+    </>
   );
 }

@@ -115,11 +115,14 @@ export function drawActionCards(state: GameState, amount: number, source: string
 }
 
 export function buyTopActionCard(state: GameState): GameState {
-  if (!state.activeCombat || state.mana === null || state.combatFeedback) {
+  const inCombat = state.activeCombat || state.activeBossCombat;
+  const hasFeedback = state.combatFeedback || state.bossCombatFeedback;
+  if (!inCombat || state.mana === null || hasFeedback) {
     return addLog(state, 'Lance la mana avant d acheter une carte action.');
   }
 
-  if (state.activeCombat.phase !== 'player') {
+  const phase = state.activeCombat?.phase ?? state.activeBossCombat?.phase;
+  if (phase !== 'player') {
     return addLog(state, 'Une carte action ne peut etre achetee que pendant la phase joueuse.');
   }
 

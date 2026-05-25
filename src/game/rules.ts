@@ -65,6 +65,21 @@ export function completeCombatFeedback(state: GameState): GameState {
     return state;
   }
 
+  // Phase 1 coriace terminée → appliquer la résurrection et lancer la phase 2
+  if (state.combatFeedback.coriaceReviving && state.combatFeedback.coriaceRevivedAttack !== undefined) {
+    const { targetInstanceId, coriaceRevivedAttack } = state.combatFeedback;
+    const revivedEnemies = state.activeCombat.enemies.map((e) =>
+      e.instanceId === targetInstanceId
+        ? { ...e, enemyHealth: 1, resolvedAttack: coriaceRevivedAttack, coriaceRevived: true }
+        : e
+    );
+    return {
+      ...state,
+      activeCombat: { ...state.activeCombat, enemies: revivedEnemies },
+      combatFeedback: { targetInstanceId, damage: 0, defeated: false, xpGained: 0, combatEnded: false, coriaceJustRevived: true, coriaceRevivedAttack }
+    };
+  }
+
   const remainingEnemies = state.activeCombat.enemies.filter((enemy) => enemy.enemyHealth > 0);
   if (remainingEnemies.length > 0) {
     return {

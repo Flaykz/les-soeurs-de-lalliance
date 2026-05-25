@@ -121,6 +121,9 @@ export type CombatFeedback = {
   defeated: boolean;
   xpGained: number;
   combatEnded: boolean;
+  coriaceReviving?: boolean;
+  coriaceJustRevived?: boolean;
+  coriaceRevivedAttack?: number;
 };
 
 export type PlayerFeedback = {

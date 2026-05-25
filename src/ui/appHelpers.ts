@@ -5,9 +5,11 @@ import type { CombatEnemy, GameState, TrapFeedback, TreasureFeedback } from '../
 export const STORAGE_KEY = 'lsa-current-game';
 
 export function getBuyActionDisabledReason(game: GameState): string | null {
-  if (!game.activeCombat) return null;
-  if (game.combatFeedback) return 'Resolution de combat en cours.';
-  if (game.activeCombat.phase !== 'player') return 'Achat possible pendant la phase joueuse.';
+  const inCombat = game.activeCombat || game.activeBossCombat;
+  if (!inCombat) return null;
+  if (game.combatFeedback || game.bossCombatFeedback) return 'Resolution de combat en cours.';
+  const phase = game.activeCombat?.phase ?? game.activeBossCombat?.phase;
+  if (phase !== 'player') return 'Achat possible pendant la phase joueuse.';
   if (game.mana === null) return 'Lance d’abord le de de mana.';
   if (game.mana < 1) return 'Mana insuffisante.';
   if (game.hand.length >= 5) return 'Main pleine.';

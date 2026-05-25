@@ -323,14 +323,15 @@ function applyActionDamage(state: GameState, damage: number, targetInstanceId: s
 
   if (willBeDefeated && hasCoriace && !target.coriaceRevived) {
     const revivedAttack = target.resolvedAttack + 1;
-    const revivedEnemies = state.activeCombat.enemies.map((e) =>
-      e.instanceId === target.instanceId ? { ...e, enemyHealth: 1, resolvedAttack: revivedAttack, coriaceRevived: true } : e
+    // Phase 1 : montrer la défaite (PV à 0), la résurrection est appliquée après l'animation
+    const defeatedEnemies = state.activeCombat.enemies.map((e) =>
+      e.instanceId === target.instanceId ? { ...e, enemyHealth: 0 } : e
     );
     return addLog(
       {
         ...state,
-        activeCombat: { ...state.activeCombat, enemies: revivedEnemies },
-        combatFeedback: { targetInstanceId, damage, defeated: false, xpGained: 0, combatEnded: false }
+        activeCombat: { ...state.activeCombat, enemies: defeatedEnemies },
+        combatFeedback: { targetInstanceId, damage, defeated: true, xpGained: 0, combatEnded: false, coriaceReviving: true, coriaceRevivedAttack: revivedAttack }
       },
       `${damage} dégâts infligés. Coriace ! L'ennemi revient avec 1 PV et ${revivedAttack} en attaque.`
     );
