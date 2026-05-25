@@ -499,3 +499,114 @@
   color: #f5f5f5;
   font-weight: 700;
 }
+
+/* ── Resolution preview overlay ─────────────────────────────── */
+
+.rp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 72;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(3px);
+  padding: 24px;
+  animation: rp-fade-in 0.2s ease-out;
+}
+
+.rp-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  margin-bottom: 28px;
+}
+
+.rp-events {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
+}
+
+.rp-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 18px 22px;
+  border-radius: 18px;
+  min-width: 80px;
+  opacity: 0;
+  animation: rp-chip-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.rp-chip--trap {
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+}
+
+.rp-chip--combat {
+  background: rgba(249, 115, 22, 0.18);
+  border: 1px solid rgba(249, 115, 22, 0.45);
+}
+
+.rp-chip--treasure {
+  background: rgba(234, 179, 8, 0.18);
+  border: 1px solid rgba(234, 179, 8, 0.45);
+}
+
+.rp-chip--boss {
+  background: rgba(168, 85, 247, 0.18);
+  border: 1px solid rgba(168, 85, 247, 0.45);
+}
+
+.rp-chip-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.rp-chip-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.rp-separator {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.25);
+  flex-shrink: 0;
+  opacity: 0;
+  animation: rp-fade-in 0.25s ease-out forwards;
+}
+
+.rp-hint {
+  margin-top: 36px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.3);
+  opacity: 0;
+  animation: rp-fade-in 0.4s ease-out forwards;
+}
+
+@keyframes rp-chip-in {
+  from {
+    opacity: 0;
+    transform: translateX(18px) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes rp-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

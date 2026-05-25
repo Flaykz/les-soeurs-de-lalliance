@@ -7,6 +7,7 @@ import { BossCombatZone } from './components/BossCombatZone';
 import { CombatZone } from './components/CombatZone';
 import { HandDock } from './components/HandDock';
 import { CardInspectOverlay } from './components/overlays/CardInspectOverlay';
+import { computePreviewEvents, ResolutionPreviewOverlay, type PreviewEvent } from './components/overlays/ResolutionPreviewOverlay';
 import { DecksOverlay } from './components/overlays/DecksOverlay';
 import { LogOverlay } from './components/overlays/LogOverlay';
 import { TowerStackOverlay } from './components/overlays/TowerStackOverlay';
@@ -69,7 +70,7 @@ import {
   resolveRemoveFromCombat,
   resolveSelfDamageX,
 } from './game/rules';
-import type { ActionCard, GameState } from './game/types';
+import type { ActionCard, GameState, TowerCell } from './game/types';
 import { animationDurations, defaultAnimationSpeed, isAnimationSpeed, type AnimationSpeed } from './ui/animationConfig';
 import { deriveFaceCompact } from './ui/formatters';
 import {
@@ -101,7 +102,8 @@ export function App() {
   const [combatMessage, setCombatMessage] = useState<string | null>(null);
   const [pendingKeywordCancelEnemyId, setPendingKeywordCancelEnemyId] = useState<string | null>(null);
   const [inspectedCard, setInspectedCard] = useState<ActionCard | null>(null);
-  const [movementAnim, setMovementAnim] = useState<{ pathCellIds: string[]; step: number; pendingGame: GameState } | null>(null);
+  const [movementAnim, setMovementAnim] = useState<{ pathCellIds: string[]; step: number; pendingGame: GameState; crossedCells: TowerCell[] } | null>(null);
+  const [movementPreview, setMovementPreview] = useState<{ events: PreviewEvent[]; pendingGame: GameState } | null>(null);
   const [showTrapIntro, setShowTrapIntro] = useState(false);
   const [showTrapLevelIntro, setShowTrapLevelIntro] = useState(false);
   const [rollingCellDie, setRollingCellDie] = useState(false);
@@ -243,7 +245,12 @@ export function App() {
     const stepMs = animationDurations[animationSpeed].movementStep;
     const timer = window.setTimeout(() => {
       if (movementAnim.step >= movementAnim.pathCellIds.length - 1) {
-        setGame(movementAnim.pendingGame);
+        const events = computePreviewEvents(movementAnim.crossedCells);
+        if (events.length > 0) {
+          setMovementPreview({ events, pendingGame: movementAnim.pendingGame });
+        } else {
+          setGame(movementAnim.pendingGame);
+        }
         setMovementAnim(null);
       } else {
         setMovementAnim((prev) => prev ? { ...prev, step: prev.step + 1 } : null);
@@ -351,20 +358,30 @@ export function App() {
   const healthDelta = prevHealthRef.current !== null ? game.health - prevHealthRef.current : 0;
   const xpDelta = prevXpRef.current !== null ? game.xp - prevXpRef.current : 0;
 
+  function makeCrossedCells(cellIds: string[]): TowerCell[] {
+    if (!game) return [];
+    return cellIds
+      .slice(1)
+      .map(id => getCell(game, id))
+      .filter((c): c is TowerCell => c !== undefined && !game.resolvedCells.includes(c.id));
+  }
+
   function handleDestinationClick(cellId: string) {
     if (!game || movementAnim) return;
     const nextGame = chooseMovementDestination(game, cellId);
     if (nextGame.phase !== 'choose-path') {
       const paths = getMovementChoices(game, cellId);
       if (paths.length === 1 && paths[0].cellIds.length > 1) {
-        setMovementAnim({ pathCellIds: paths[0].cellIds, step: 1, pendingGame: nextGame });
+        const crossedCells = makeCrossedCells(paths[0].cellIds);
+        setMovementAnim({ pathCellIds: paths[0].cellIds, step: 1, pendingGame: nextGame, crossedCells });
         return;
       }
     } else if (nextGame.pendingMovementPaths.length === 1) {
       const path = nextGame.pendingMovementPaths[0];
       const confirmed = confirmMovementPath(nextGame);
       if (path.cellIds.length > 1) {
-        setMovementAnim({ pathCellIds: path.cellIds, step: 1, pendingGame: confirmed });
+        const crossedCells = makeCrossedCells(path.cellIds);
+        setMovementAnim({ pathCellIds: path.cellIds, step: 1, pendingGame: confirmed, crossedCells });
         return;
       }
       setGame(confirmed);
@@ -387,7 +404,8 @@ export function App() {
       : null;
     const nextGame = confirmMovementPath(game);
     if (path && path.cellIds.length > 1) {
-      setMovementAnim({ pathCellIds: path.cellIds, step: 1, pendingGame: nextGame });
+      const crossedCells = makeCrossedCells(path.cellIds);
+      setMovementAnim({ pathCellIds: path.cellIds, step: 1, pendingGame: nextGame, crossedCells });
       return;
     }
     setGame(nextGame);
@@ -1101,6 +1119,16 @@ export function App() {
         })()}
         xp={game.xp}
       />
+
+      {movementPreview && (
+        <ResolutionPreviewOverlay
+          events={movementPreview.events}
+          onDismiss={() => {
+            setGame(movementPreview.pendingGame);
+            setMovementPreview(null);
+          }}
+        />
+      )}
     </main>
     </>
   );

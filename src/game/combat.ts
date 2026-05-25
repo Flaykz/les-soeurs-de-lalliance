@@ -297,10 +297,17 @@ function applyActionEffects(state: GameState, face: CardFaceData, targetInstance
         );
       }
     } else if (effect.kind === 'reroll-enemy-die') {
-      nextState = addLog(
-        { ...nextState, pendingEnemyReroll: { remainingRerolls: effect.maxRerolls } },
-        `Choisissez un de ennemi a relancer (${effect.maxRerolls} relance(s)).`
+      const hasRerollableEnemy = nextState.activeCombat?.enemies.some(
+        (e) => e.enemyHealth > 0 && (e.attackWasRolled || e.healthWasRolled)
       );
+      if (!hasRerollableEnemy) {
+        nextState = addLog(nextState, 'Aucun ennemi n a de de variable a relancer : aucun effet.');
+      } else {
+        nextState = addLog(
+          { ...nextState, pendingEnemyReroll: { remainingRerolls: effect.maxRerolls } },
+          `Choisissez un de ennemi a relancer (${effect.maxRerolls} relance(s)).`
+        );
+      }
     } else if (effect.kind === 'cancel-enemy-keyword') {
       nextState = addLog(
         { ...nextState, pendingKeywordCancel: true },
