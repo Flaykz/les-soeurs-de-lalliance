@@ -111,6 +111,7 @@ export function App() {
   const [showTrapIntro, setShowTrapIntro] = useState(false);
   const [showTrapLevelIntro, setShowTrapLevelIntro] = useState(false);
   const [showCombatIntro, setShowCombatIntro] = useState(false);
+  const [combatIntroData, setCombatIntroData] = useState<{ number: number; total: number } | null>(null);
   const [showTreasureIntro, setShowTreasureIntro] = useState(false);
   const [showBlockedMovement, setShowBlockedMovement] = useState(false);
   const [towerTransitionInfo, setTowerTransitionInfo] = useState<{ name: string; index: number; total: number; isBoss: boolean } | null>(null);
@@ -122,6 +123,8 @@ export function App() {
   const prevTrapFeedbackRef = useRef<GameState['trapFeedback']>(game?.trapFeedback ?? null);
   const prevPendingTrapLevelDiscardRef = useRef<GameState['pendingTrapLevelDiscard']>(game?.pendingTrapLevelDiscard ?? null);
   const prevActiveCombatRef = useRef<GameState['activeCombat']>(game?.activeCombat ?? null);
+  const combatGroupCountRef = useRef(0);
+  const totalCombatGroupsRef = useRef(0);
   const prevBlockedMovementRef = useRef<GameState['blockedMovementFeedback']>(null);
   const prevTowerIndexRef = useRef<number>(game?.currentTowerIndex ?? 0);
   const shellRef = useRef<HTMLElement>(null);
@@ -290,11 +293,24 @@ export function App() {
     const prev = prevActiveCombatRef.current;
     const current = game.activeCombat;
     prevActiveCombatRef.current = current;
-    if (!prev && current) {
-      setShowCombatIntro(true);
-      const timer = window.setTimeout(() => setShowCombatIntro(false), animationDurations[animationSpeed].combatIntro);
-      return () => window.clearTimeout(timer);
+    if (!current) return;
+    const prevIds = new Set(prev?.enemies.map((e) => e.instanceId) ?? []);
+    const currentIds = current.enemies.map((e) => e.instanceId);
+    const isNewCombat = currentIds.length > 0 && !currentIds.some((id) => prevIds.has(id));
+    if (!isNewCombat) return;
+    if (!prev) {
+      const total = game.pendingCombatGroups.length + 1;
+      totalCombatGroupsRef.current = total;
+      combatGroupCountRef.current = 1;
+    } else {
+      combatGroupCountRef.current += 1;
     }
+    const number = combatGroupCountRef.current;
+    const total = totalCombatGroupsRef.current;
+    setShowCombatIntro(true);
+    setCombatIntroData(total > 1 ? { number, total } : null);
+    const timer = window.setTimeout(() => setShowCombatIntro(false), animationDurations[animationSpeed].combatIntro);
+    return () => window.clearTimeout(timer);
   }, [animationSpeed, game?.activeCombat]);
 
   useEffect(() => {
@@ -1130,8 +1146,12 @@ export function App() {
         <div className="combat-intro-overlay" aria-live="assertive" role="alert">
           <div className="combat-intro-card">
             <span className="combat-intro-icon" aria-hidden="true">⚔</span>
-            <p className="combat-intro-title">Combat !</p>
-            <p className="combat-intro-sub">Résolution en cours…</p>
+            <p className="combat-intro-title">
+              {combatIntroData ? `Combat n°${combatIntroData.number}` : 'Combat !'}
+            </p>
+            <p className="combat-intro-sub">
+              {combatIntroData ? `${combatIntroData.number} / ${combatIntroData.total}` : 'Résolution en cours…'}
+            </p>
           </div>
         </div>
       )}
