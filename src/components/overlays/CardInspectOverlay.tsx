@@ -84,10 +84,9 @@ export function CardInspectOverlay({ card, flippedCards, xp, canUpgrade, onUpgra
               Améliorer — {upgradeCost} XP
             </button>
           )}
-          {onDiscardForMana && (
+          {onDiscardForMana && !discardDisabled && (
             <button
               className="secondary-button"
-              disabled={discardDisabled}
               onClick={() => { onDiscardForMana(); onClose(); }}
               type="button"
             >
