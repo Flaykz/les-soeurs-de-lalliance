@@ -108,13 +108,9 @@ export function completeCombatFeedback(state: GameState): GameState {
 function createTowerSequence(boss: BossCard): string[] {
   const normalTowers = towerDefinitions.filter((tower) => !tower.id.startsWith('boss-tower-'));
   const normalTowerCount = boss.normalTowerCount ?? 1;
-  const normalTowerIds = Array.from({ length: normalTowerCount }, () => pickRandomTower(normalTowers).id);
-  const bossTower = getTower(boss.bossTowerId ?? '') ?? towerDefinitions.find((tower) => tower.id.startsWith('boss-tower-')) ?? pickRandomTower(normalTowers);
+  const normalTowerIds = shuffle(normalTowers.map((t) => t.id)).slice(0, normalTowerCount);
+  const bossTower = getTower(boss.bossTowerId ?? '') ?? towerDefinitions.find((tower) => tower.id.startsWith('boss-tower-')) ?? normalTowers[0];
   return [...normalTowerIds, bossTower.id];
-}
-
-function pickRandomTower(towers: typeof towerDefinitions): typeof towerDefinitions[0] {
-  return towers[Math.floor(Math.random() * towers.length)] ?? towerDefinitions[0];
 }
 
 export * from './data-access';

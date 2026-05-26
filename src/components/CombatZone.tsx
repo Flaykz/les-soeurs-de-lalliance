@@ -33,24 +33,20 @@ export function CombatZone({ activeEnemies, canSelectEnemy, combatFeedback, comb
   return (
     <div className="combat-zone">
       <div className="combat-arena" style={{ '--n': activeEnemies.length } as CSSProperties}>
-        <div className={`player-character-card${playerFeedback ? ' player-card-hit' : ''}`}>
-          {playerFeedback && (
-            <div className="player-hit-feedback" aria-live="assertive" key={`${playerFeedback.incomingDamage}-${playerFeedback.net}`}>
-              <span className="player-hit-icon">⚔</span>
-              <span className="player-hit-detail">
-                {playerFeedback.incomingDamage} ATT
-                {playerFeedback.blocked > 0 && <> − {playerFeedback.blocked} DEF</>}
-                {' = '}
-                {playerFeedback.net === 0
-                  ? <strong className="player-hit-zero">Bloque !</strong>
-                  : <strong className="player-hit-net">−{playerFeedback.net} PV</strong>
-                }
-              </span>
-            </div>
-          )}
+        <div className={`player-character-card${playerFeedback ? ' player-card-hit' : ''}`} data-player-card>
+          {playerFeedback?.hits?.map(({ damage }, i) => (
+            <span
+              aria-live="assertive"
+              className="player-individual-hit"
+              key={`hit-${playerFeedback.net}-${i}`}
+              style={{ '--hit-delay': `${i * 400 + 360}ms` } as CSSProperties}
+            >
+              −{damage}
+            </span>
+          ))}
 
           <div className="player-card-stats-row">
-            <span className="player-stat-bubble player-hp-stat" aria-label={`${health} points de vie`}>
+            <span className={`player-stat-bubble player-hp-stat${playerFeedback && playerFeedback.net > 0 ? ' hp-damaged' : ''}`} key={`hp-${health}`} aria-label={`${health} points de vie`}>
               <span className="bubble-value">{health}</span>
               <span className="bubble-label">♥ PV</span>
             </span>
@@ -131,6 +127,7 @@ export function CombatZone({ activeEnemies, canSelectEnemy, combatFeedback, comb
               currentHealth={enemy.enemyHealth}
               disabled={!canSelectEnemy}
               feedback={combatFeedback?.targetInstanceId === enemy.instanceId ? combatFeedback : null}
+              instanceId={enemy.instanceId}
               isInteractive
               isSelected={enemy.instanceId === selectedEnemyInstanceId}
               isUntargetable={enemy.isUntargetable}

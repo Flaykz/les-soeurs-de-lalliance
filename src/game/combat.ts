@@ -183,17 +183,20 @@ export function endCombatRound(state: GameState): GameState {
   const isHasteRound1 = state.activeCombat.round === 1 && Boolean(state.activeCombat.hasteAttackedRound1);
   const noDefense = state.activeCombat.defense === 0;
 
+  const hits: Array<{ instanceId: string; damage: number }> = [];
   const incomingDamage = state.activeCombat.enemies.reduce((total, combatEnemy) => {
     if (combatEnemy.enemyHealth <= 0) return total;
     if (isHasteRound1 && hasTrait(combatEnemy.enemyId, 'hâte', combatEnemy.suppressedTraits)) return total;
     const atk = combatEnemy.resolvedAttack;
-    return total + (noDefense && hasTrait(combatEnemy.enemyId, 'rage', combatEnemy.suppressedTraits) ? atk * 2 : atk);
+    const dmg = noDefense && hasTrait(combatEnemy.enemyId, 'rage', combatEnemy.suppressedTraits) ? atk * 2 : atk;
+    hits.push({ instanceId: combatEnemy.instanceId, damage: dmg });
+    return total + dmg;
   }, 0);
 
   const blocked = state.activeCombat.defense;
   const net = Math.max(0, incomingDamage - blocked);
   const { health, healthLimit } = applyDamageToHealth(state.health, state.healthLimit, net);
-  const playerFeedback = { incomingDamage, blocked, net };
+  const playerFeedback = { incomingDamage, blocked, net, hits };
 
   let rageNote = '';
   if (noDefense && state.activeCombat.enemies.some((e) => e.enemyHealth > 0 && hasTrait(e.enemyId, 'rage', e.suppressedTraits))) {

@@ -5,6 +5,7 @@ import { DieFace, RollingDie } from './components/DieFace';
 import { CardPeek, DiscardList } from './components/CardCatalog';
 import { BossCombatZone } from './components/BossCombatZone';
 import { CombatZone } from './components/CombatZone';
+import { DamageProjectile } from './components/DamageProjectile';
 import { HandDock } from './components/HandDock';
 import { CardInspectOverlay } from './components/overlays/CardInspectOverlay';
 import { computePreviewEvents, ResolutionPreviewOverlay, type PreviewEvent } from './components/overlays/ResolutionPreviewOverlay';
@@ -426,12 +427,14 @@ export function App() {
   );
   const buyActionDisabledReason = getBuyActionDisabledReason(game);
   const canRerollMovementWithXp = game.xp >= 1 && Boolean(game.movementDice) && (game.phase === 'choose-destination' || game.phase === 'choose-path') && !game.activeCombat;
+  const projHitCount = game.playerFeedback?.hits?.length ?? 1;
   const animationStyle = {
     '--combat-animation-ms': `${animationDurations[animationSpeed].defeat}ms`,
     '--dice-animation-ms': `${animationDurations[animationSpeed].damage}ms`,
     '--player-feedback-ms': `${animationDurations[animationSpeed].playerFeedback}ms`,
     '--move-step-ms': `${animationDurations[animationSpeed].movementStep}ms`,
-    '--trap-feedback-ms': `${animationDurations[animationSpeed].trapFeedback}ms`
+    '--trap-feedback-ms': `${animationDurations[animationSpeed].trapFeedback}ms`,
+    '--proj-impact-delay': `${Math.max(0, projHitCount - 1) * 400 + 360}ms`,
   } as CSSProperties;
 
   const healthDelta = prevHealthRef.current !== null ? game.health - prevHealthRef.current : 0;
@@ -630,10 +633,11 @@ export function App() {
   return (
     <>
     <PWAPrompts />
+    <DamageProjectile feedback={game.playerFeedback} />
     <main className={`shell game-shell${hasFloatingBar ? ' has-floating-bar' : ''}`} ref={shellRef} style={animationStyle}>
       <section className="status-bubbles" aria-label="Etat de partie">
         <span
-          className={`status-bubble${healthDelta < 0 ? ' bubble-damaged' : healthDelta > 0 ? ' bubble-healed' : ''}`}
+          className={`status-bubble${healthDelta > 0 ? ' bubble-healed' : ''}`}
           key={`hp-${game.health}`}
           title={`Points de vie (plafond ${game.healthLimit})`}
         ><span aria-hidden="true">♥</span>{game.health}</span>

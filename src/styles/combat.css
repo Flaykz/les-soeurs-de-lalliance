@@ -222,17 +222,30 @@
 
 .player-card-hit {
   animation: playerCardHit var(--combat-animation-ms, 1100ms) ease both;
+  animation-delay: var(--proj-impact-delay, 360ms);
 }
 
-.player-character-card .player-hit-feedback {
+/* ── Nombres de dégâts individuels par ennemi ───────────────── */
+
+.player-individual-hit {
   position: absolute;
-  inset: 0;
-  z-index: 3;
-  flex-direction: column;
-  border-radius: 16px;
-  border-color: rgba(248, 113, 113, 0.6);
-  background: rgba(24, 4, 4, 0.94);
-  font-size: 0.9rem;
+  top: 35%;
+  left: 50%;
+  z-index: 4;
+  color: #fecaca;
+  font-size: 1.7rem;
+  font-weight: 1000;
+  white-space: nowrap;
+  text-shadow: 0 0 18px rgba(220, 38, 38, 0.85), 0 2px 8px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  animation: individualHitFloat 700ms ease-out both;
+  animation-delay: var(--hit-delay, 360ms);
+}
+
+@keyframes individualHitFloat {
+  0%   { opacity: 0; transform: translate(-50%, 0) scale(0.5); }
+  12%  { opacity: 1; transform: translate(-50%, -6px) scale(1.3); }
+  100% { opacity: 0; transform: translate(-50%, -54px) scale(1); }
 }
 
 .combat-round-chip {
@@ -682,6 +695,56 @@
 
 .status.danger {
   color: #fca5a5;
+}
+
+/* ── Projectile de dégâts ennemi → aventurière ──────────────── */
+
+@property --proj-x1 { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --proj-y1 { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --proj-x2 { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --proj-y2 { syntax: '<length>'; inherits: false; initial-value: 0px; }
+
+.damage-projectile {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 35%, #fecaca, #ef4444 58%, #7f1d1d);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.95), 0 0 6px rgba(254, 202, 202, 0.7);
+  z-index: 999;
+  pointer-events: none;
+  animation: projectileFly 400ms cubic-bezier(0.4, 0, 0.7, 1) both;
+  animation-delay: var(--proj-delay, 0ms);
+}
+
+@keyframes projectileFly {
+  from {
+    transform: translate(var(--proj-x1), var(--proj-y1)) translate(-50%, -50%) scale(1.5);
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--proj-x2), var(--proj-y2)) translate(-50%, -50%) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* ── Flash HP aventurière à l'impact ────────────────────────── */
+
+.player-hp-stat.hp-damaged {
+  animation: hpBubbleDamaged var(--player-feedback-ms, 2400ms) ease both;
+  animation-delay: var(--proj-impact-delay, 360ms);
+}
+
+@keyframes hpBubbleDamaged {
+  0%   { transform: scale(1); border-color: rgba(248, 113, 113, 0.8); }
+  10%  { transform: scale(1.22); border-color: rgba(248, 113, 113, 1); box-shadow: 0 0 0 5px rgba(248, 113, 113, 0.45); }
+  22%  { transform: scale(1); box-shadow: none; }
+  100% { }
 }
 
 /* ── Keyframes combat ────────────────────────────────────────── */

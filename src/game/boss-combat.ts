@@ -162,7 +162,7 @@ export function resolveBossAttack(state: GameState): GameState {
       healthLimit,
       mana: null,
       banishableCardId: null,
-      playerFeedback: { incomingDamage: bossAtk, blocked: defense, net },
+      playerFeedback: { incomingDamage: bossAtk, blocked: defense, net, hits: [] },
       activeBossCombat: {
         ...state.activeBossCombat,
         round: state.activeBossCombat.round + 1,

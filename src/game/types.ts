@@ -138,6 +138,7 @@ export type PlayerFeedback = {
   incomingDamage: number;
   blocked: number;
   net: number;
+  hits: Array<{ instanceId: string; damage: number }>;
 };
 
 export type PendingCombatGroup = {

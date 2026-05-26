@@ -3,6 +3,7 @@ import { formatValue, getEnemyXpByRound } from '../ui/formatters';
 
 interface EnemyCardDisplayProps {
   card: EnemyCard | undefined;
+  instanceId?: string;
   currentHealth?: number;
   resolvedAttack?: number;
   isSelected?: boolean;
@@ -16,6 +17,7 @@ interface EnemyCardDisplayProps {
 
 export function EnemyCardDisplay({
   card,
+  instanceId,
   currentHealth,
   resolvedAttack,
   isSelected = false,
@@ -94,6 +96,12 @@ export function EnemyCardDisplay({
     </>
   );
 
+  const dataAttrs = {
+    'data-enemy-card': '',
+    ...(instanceId ? { 'data-enemy-id': instanceId } : {}),
+    ...(feedback?.defeated ? { 'data-defeated': '' } : {}),
+  };
+
   if (isInteractive) {
     return (
       <button
@@ -102,6 +110,7 @@ export function EnemyCardDisplay({
         disabled={disabled || isUntargetable}
         onClick={onSelect}
         type="button"
+        {...dataAttrs}
       >
         {content}
       </button>
@@ -109,7 +118,7 @@ export function EnemyCardDisplay({
   }
 
   return (
-    <article aria-label={card?.id ?? 'Ennemi'} className={classNames}>
+    <article aria-label={card?.id ?? 'Ennemi'} className={classNames} {...dataAttrs}>
       {content}
     </article>
   );
